@@ -1,0 +1,107 @@
+---
+title: "PP 06"
+author: "Andrew Kerr"
+format:
+  html:
+    number_sections: yes
+    code-fold: true
+    toc: true
+    toc-title: "Outline"
+    toc-depth: 3
+embed-resources: true
+---
+
+```{r}
+#| message: false
+#| include: false 
+
+library(tidyverse)
+library(kableExtra)
+```
+
+Example 5.4 Suppose that you are presented with six boxes, labeled 0, 1, 2, ..., 5, each containing five marbles. Box 0 contains 0 green and 5 gold marbles, box 1 contains 1 green and 4 gold, and so on with box i containing i green and 5-i gold. One of the boxes is chosen uniformly at random (perhaps by rolling a fair six-sided die), and then you will randomly select marbles from that box, without replacement. Based on the colors of the marbles selected, you will update the probabilities of which box had been chosen.
+
+### 1. Suppose that a single marble is selected and it is green. Which box do you think is the most likely to have been chosen? Make a guess for the posterior probabilities for each box. Then construct a Bayes table to compute the posterior probabilities. How do they compare to the prior probabilities?
+
+Any box other than the first box (box 0) is equally likely to be chosen. The posterior probabilities will be greatest for box 5, then decreasing as i decreases since you are more likely to pull a green marble from boxes with more green marbles (and the probability for box 0 will be 0).
+
+```{r}
+box <- seq(0, 5)
+prior <- c(0, 1/5, 1/5, 1/5, 1/5, 1/5)
+likelihood <- c(0, 1/5, 2/5, 3/5, 4/5, 5/5)
+
+df <- data.frame(
+  box,
+  prior,
+  likelihood
+)
+
+df <- df %>%
+  mutate(
+    product = prior * likelihood,
+    posterior = product / sum(product)
+  )
+
+df %>%
+  kable(digits = 3)
+```
+
+The posterior is the same as the prior for box 3, while slightly greater for boxes 4 and 5 and slightly smaller for boxes 1 and 2. The posterior is proportional to the likelihood probabilities because the prior is flat!
+
+### 2. Now suppose a second marble is selected from the same box, without replacement, and its color is gold. Which box do you think is the most likely to have been chosen given these two marbles? Make a guess for the posterior probabilities for each box. Then construct a Bayes table to compute the posterior probabilities, *using the posterior probabilities from the previous part after the selection of the green* *marble as the new prior probabilities before seeing the gold marble.*
+
+Each box has 1 less green marble. The likelihood of drawing a gold marble is 5-i / 4 with i being the number of the box. The posterior probabilities should increase for lower number boxes and decrease for higher number boxes.
+
+```{r}
+prior <- df$posterior
+likelihood <- c(4/4, 4/4, 3/4, 2/4, 1/4, 0)
+
+df <- data.frame(
+  box,
+  prior,
+  likelihood
+)
+
+df <- df %>%
+  mutate(
+    product = prior * likelihood,
+    posterior = product / sum(product)
+  )
+
+df %>%
+  kable(digits = 3)
+```
+
+### 3. Now construct a Bayes table corresponding to the original prior probabilities (1/6 each) and the combined evidence that the first ball selected was green and the second was gold. How do the posterior probabilities compare to the previous part?
+
+```{r}
+prior <- c(1/6, 1/6, 1/6, 1/6, 1/6, 1/6)
+likelihood <- c(
+  (5/5)*(0/4), 
+  (4/5)*(1/4),
+  (3/5)*(2/4),
+  (2/5)*(3/4),
+  (1/5)*(4/4),
+  (0/5)*(5/4))
+
+df <- data.frame(
+  box,
+  prior,
+  likelihood
+)
+
+df <- df %>%
+  mutate(
+    product = prior * likelihood,
+    posterior = product / sum(product)
+  )
+
+df %>%
+  kable(digits = 3)
+```
+
+They are the same as the posterior probabilities from part 2, showing whether we update sequentially or all at once does not matter!
+
+### 4. In the previous part, the first ball selected was green and the second was gold. Suppose you only knew that in a sample of two marbles, 1 was green and 1 was gold. That is, you didn’t know which was first or second. How would the previous part change? Should knowing the order matter? Does it?
+
+The resulting posterior probabilities of the previous part will not change since the ratio of the likelihoods will be the same.
