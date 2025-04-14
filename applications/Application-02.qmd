@@ -158,6 +158,30 @@ bayes_table |>
 
 ```
 
+# Functions
+
+```{r}
+tile <- function(bayes_table, col) {
+  ggplot(bayes_table |>
+         mutate(
+           # changing to factor just aligns the axes better in the plot
+           x = factor(x), y = factor(y),
+           # display probability as percent
+           col = round(100 * {{col}}, 1)),
+       aes(x, y,
+           fill = col,
+           label = col)) +
+  # add the colored squares
+  geom_tile() +
+  # limits fixes the color limits to compare across plots
+  scale_fill_viridis_c(limits = c(0, 6)) +
+  # the rest just displays the probabilities in the squares
+  # black/white text depending on square color
+  geom_text(aes(color = col > 3)) +
+  scale_color_manual(guide = "none", values = c("white", "black")) +
+  labs(title = "Probability (%) that plane is in square")
+}
+```
 
 # Day 1
 
@@ -169,20 +193,39 @@ The key is to properly define the likelihood column.)
 1. Construct a Bayes table to compute the posterior distribution after day 1.
 (You can display a few rows if you want, but don't print the whole Bayes table.)
 
-1. Plot the posterior distribution after day 1 in a tile plot like the one for the prior.
-
-1. Compare the posterior distribution to the prior; how has it changed?
-
-1. Which location will you search on day 2?
-
-
 ```{r}
-# Enter your code here - add as many chunks as you want
+d1 <- bayes_table %>%
+  mutate(
+    likelihood = case_when(
+      x == 3 & y == 3 ~ .9,
+      TRUE ~ 1
+    ),
+    product = prior * likelihood,
+    posterior = product / sum(product)
+  )
+
+d1 %>%
+  head(10) %>%
+  kable()
 ```
 
-**TYPE YOUR RESPONSES HERE.**
+2. Plot the posterior distribution after day 1 in a tile plot like the one for the prior.
 
+```{r}
+tile(d1, posterior)
+```
 
+3. Compare the posterior distribution to the prior; how has it changed?
+
+The posterior probability for all tiles very slightly increased (by less than .1), expect for tile (3, 3) which decreased since the plane was not found within it.
+
+4. Which location will you search on day 2?
+
+```{r}
+d1 %>% slice_max(posterior) %>% select(x, y)
+```
+
+I will search the next highest, (7, 7).
 
 # Day 2
 
@@ -193,16 +236,40 @@ Suppose *the plane is not found in the square*.
 1. Construct a Bayes table to compute the posterior distribution after day 2.
 (You can display a few rows if you want, but don't print the whole Bayes table.)
 
-1. Plot the posterior distribution after day 2 in a tile plot like the one for the prior.
+```{r}
+d2 <- d1 %>%
+  mutate(
+    prior = posterior,
+    likelihood = case_when(
+      x == 7 & y == 7 ~ .9,
+      TRUE ~ 1
+    ),
+    product = prior * likelihood,
+    posterior = product / sum(product)
+  )
 
-1. Compare the posterior distribution after day 2 to the posterior distribution after day 1; how has it changed?
+d2 %>%
+  head(10) %>%
+  kable()
+```
 
-1. Which location will you search on day 3?
-
+2. Plot the posterior distribution after day 2 in a tile plot like the one for the prior.
 
 ```{r}
-# Enter your code here - add as many chunks as you want
+tile(d2, posterior)
 ```
+
+3. Compare the posterior distribution after day 2 to the posterior distribution after day 1; how has it changed?
+
+Once again the posterior prbabilities slightly increased for all tiles except (7, 7), where it decreased. 
+
+4. Which location will you search on day 3?
+
+```{r}
+d2 %>% slice_max(posterior) %>% select(x, y)
+```
+
+I will search (3, 3).
 
 **TYPE YOUR RESPONSES HERE.**
 
@@ -212,12 +279,39 @@ Continue in this manner for 10 days of unsuccessful searches; you don't find the
 At the end of each day report the square that has the highest posterior probability, and what the probability is.
 Also provide a plot of the posterior distribution after the 10 days; how does it compare to the prior?
 
-
 ```{r}
-# Enter your code here - add as many chunks as you want
+sim_day <- function(bayes_table, best_tile) {
+  
+  bayes_table <- bayes_table %>%
+    mutate(
+    prior = posterior,
+    likelihood = case_when(
+      x == best_tile$x & y == best_tile$y ~ .9,
+      TRUE ~ 1
+    ),
+    product = prior * likelihood,
+    posterior = product / sum(product)
+  )
+  
+}
+
+bt <- d2
+tile_lst <- data.frame()
+
+for(i in 3:10) {
+  best_tile <- bt %>% 
+    slice_max(posterior) %>% 
+    mutate(day = i) %>%
+    select(day, x, y, posterior) 
+  tile_lst <- rbind(tile_lst, best_tile)
+  bt <- sim_day(bt, best_tile)
+}
+
+tile_lst %>% kable()
+tile(bt, posterior)
 ```
 
-**TYPE YOUR RESPONSES HERE.**
+Compared to the prior, most of the posterior probabilities have decreased. Additionally, the ratio between the higher and middle probabilities is smaller (they are closer together), however the same shape of which tiles have higher probabilities and which have lower is the same (two circles centered on (3, 3) and (7, 7)).
 
 # Searching the first square on multiple days
 
@@ -229,11 +323,20 @@ Note: you should do this in a single Bayes table, with the appropriate likelihoo
 (Also, yes, we could just adjust $p$ properly to translate from 1-day searches to 4-day searches, but just take the set up as is.)
 
 ```{r}
-# Enter your code here - add as many chunks as you want
+d1_rep <- bayes_table %>%
+  mutate(
+    likelihood = case_when(
+      x == 3 & y == 3 ~ .9 ** 4,
+      TRUE ~ 1
+    ),
+    product = prior * likelihood,
+    posterior = product / sum(product)
+  )
+
+tile(d1_rep, posterior)
 ```
 
-**TYPE YOUR RESPONSES HERE.**
-
+Most other tiles have increased by around 0.1, while tile (3, 3) has greatly decreased.
 
 # Searching every square once
 
@@ -242,12 +345,65 @@ Suppose that *we search every square exactly once and we never find the plane*.
 What will the posterior distribution be after the results of these 100 unsuccessful searches?
 Explain without doing any calculations.
 
-
-**TYPE YOUR RESPONSES HERE.**
-
+The posterior distribution should be the exact same as the prior since the same result occured on every tile, which gives us the same amount of information as not searching any tile (that being none!).
 
 # Your choice!
 
 Take the above set up and investigate a question or feature of interest to you.
 There is lots you can do; I'll leave it to your creativity!
 
+Since it takes time and money to move around the ocean (and the captain is a bit lazy), I will search the highest probability of the tile and its surrounding tiles. If two tiles have the same probability, then we will select the one of the tied tiles at random.
+
+```{r}
+sim_day_adv <- function(bayes_table, best_tile, i) {
+  
+  bayes_table <- bayes_table %>%
+    mutate(
+      prior = posterior,
+      likelihood = case_when(
+        x == best_tile$x & y == best_tile$y ~ .9,
+        TRUE ~ 1
+      ),
+      product = prior * likelihood,
+      posterior = product / sum(product)
+    )
+  
+}
+
+bt <- bayes_table %>%
+  mutate(posterior = prior)
+tile_lst <- data.frame()
+
+best_tile <- bt %>% 
+    slice_max(prior, with_ties = F) %>% 
+    mutate(
+      day = 1,
+      probability = prior) %>%
+    select(day, x, y, probability)
+
+for(i in 1:50) {
+  if(i != 1) {
+    last_x_y <- best_tile %>% tail(1) %>% select(x, y)
+    best_tile <- bt %>% 
+      filter(
+        x >= last_x_y$x - 1 & 
+          x <= last_x_y$x + 1 & 
+          y >= last_x_y$y - 1 & 
+          y <= last_x_y$y + 1
+        ) %>%
+      slice_max(posterior, with_ties = F) %>% 
+      mutate(
+        day = i,
+        probability = posterior
+        ) %>%
+      select(day, x, y, probability) 
+  }
+  tile_lst <- rbind(tile_lst, best_tile)
+  bt <- sim_day_adv(bt, best_tile, i)
+}
+
+tile_lst %>% kable()
+tile(bt, posterior)
+```
+
+Compared to the prior, the tiles around the starting position of (3, 3) have all greatly decreased, while the other non-zero tiles have increased. This happens even after 50 days of searching since the tiles leading to the other "hotspot" at (7, 7) started out so low.
