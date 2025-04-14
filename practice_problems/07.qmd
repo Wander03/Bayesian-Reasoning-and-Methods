@@ -1,0 +1,70 @@
+---
+title: "PP 07"
+author: "Andrew Kerr"
+format:
+  html:
+    number_sections: yes
+    code-fold: true
+    toc: true
+    toc-title: "Outline"
+    toc-depth: 3
+embed-resources: true
+---
+
+```{r}
+#| message: false
+#| include: false 
+
+library(tidyverse)
+library(kableExtra)
+```
+
+A recent worldwide survey conducted by the Pew Research CenterLinks asked:
+
+We’re interested in exploring what it means to live a satisfying life. Please take a moment to reflect on your life and what makes it feel worthwhile - then answer the question below as thoughtfully as you can. What about your life do you currently find meaningful, fulfilling or satisfying? What keeps you going and why?
+
+Of the 2,596 Americans surveyed, 49% mentioned “family” in their response. Let theta be the population proportion of all Americans who would mention family when describing what gives them meaning in life. You can assume this is a representative sample of Americans.
+
+You perform a Bayesian analysis of the data, and your posterior distribution is approximately Normal with posterior mean 0.480 and posterior standard deviation 0.015.
+
+Note: you can use software to compute. However, you might want to compute by hand for practice (especially if you’re rusty on Normal distribution calculations).
+
+### 1. Was your prior mean greater than 0.49, less than 0.49, or equal to 0.49? Explain without doing any calculations.
+
+My prior mean was below 0.49 since the posterior mean is between the prior and sample proportion. 
+
+### 2. Was your prior SD greater than 0.015, less than 0.015, or equal to 0.015? Explain without doing any calculations.
+
+My prior SD was larger than 0.015 since it should get lower with added data.
+
+### 3. Compute a 67% central posterior credible interval for theta.
+
+```{r}
+thresh <- (1-.67)/2
+interval <- c(thresh, 1-thresh)
+
+qnorm(interval, .48, .015)
+```
+
+### 4. Interpret the credible interval from the previous part in context.
+
+The posterior probability that theta lies between .465 and .495 is 67%.
+
+### 5. Compute a 90% central posterior credible interval for theta.
+
+```{r}
+thresh <- (1-.9)/2
+interval <- c(thresh, 1-thresh)
+
+qnorm(interval, .48, .015)
+```
+
+### 6. Interpret the credible interval from the previous part in context.
+
+The posterior probability that theta lies between .455 and .505 is 90%.
+
+### 7. Compute the posterior probability that a majority of Americans would mention family when describing what gives them meaning in life.
+
+```{r}
+1 - pnorm(.5, .48, .015)
+```
