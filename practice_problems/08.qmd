@@ -1,0 +1,56 @@
+---
+title: "PP 08"
+author: "Andrew Kerr"
+format:
+  html:
+    number_sections: yes
+    code-fold: true
+    toc: true
+    toc-title: "Outline"
+    toc-depth: 3
+embed-resources: true
+---
+
+```{r}
+#| message: false
+#| include: false 
+
+library(tidyverse)
+library(kableExtra)
+```
+
+Assume the amount of sleep (hours) that a randomly selected Cal Poly student gets on a typical week night follows a Normal distribution with mean theta hours and standard deviation 1.5 hours. 
+
+Assume that the prior distribution of theta is Normal with mean 8 and standard deviation 0.5.
+
+In a sample of 25 Cal Poly students, the sample mean amount of sleep is 7.1 hours.
+
+You perform a Bayesian analysis of the data, and your posterior distribution is approximately Normal with posterior mean 7.34 and posterior standard deviation 0.26.
+
+Note: you can use software to compute. However, you might want to compute by hand for practice (especially if you’re rusty on Normal distribution calculations).
+
+### 1. There are a few SDs above. Explain in words in context what each of these SDs represent
+
+1. 1.5
+
+2. 0.5
+
+3. 0.26
+
+4. Also, what does 1.5 / sqrt(25) represent?
+
+### 2. Compute and interpret a 67% central prior credible interval for theta.
+
+### 3. Compute and interpret a 98% central prior credible interval for theta.
+
+### 4. Compute and interpret the prior probability that theta is less than 7.5.
+
+### 5. Compute and interpret a 67% central posterior credible interval for theta.
+
+### 6. Compute and interpret a 98% central posterior credible interval for theta.
+
+### 7. Compute and interpret the posterior probability that theta is less than 7.5.
+
+
+
+
