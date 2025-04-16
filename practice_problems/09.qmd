@@ -1,0 +1,88 @@
+---
+title: "PP 09"
+author: "Andrew Kerr"
+format:
+  html:
+    number_sections: yes
+    code-fold: true
+    toc: true
+    toc-title: "Outline"
+    toc-depth: 3
+embed-resources: true
+---
+
+```{r}
+#| message: false
+#| include: false 
+
+library(tidyverse)
+library(kableExtra)
+```
+
+In part 1 of each example, you can compute frequentist methods however you like: applet, software, by hand, etc. You should get a 98% confidence interval of roughly [97.5, 97.9] and a p-value of basically 0 for the hypothesis test. Don't worry about the frequentist calculations in part 1. Instead, focus on comparing and contrasting the Bayesian and frequentist numerical results and their interpretations in parts 2-6.
+
+### Example 9.3 
+Recall Example 8.4 in which we assumed body temperatures (degrees Fahrenheit) of healthy adults follow a Normal distribution with unknown mean theta and known standard deviation sigma = 1, and our goal was to estimate theta, the population mean healthy human body temperature.
+
+We performed a Bayesian analysis based on a sample of 208 healthy adults with a sample mean body temperature of 97.7 degrees F.
+
+1. Compute a 98% frequentist confidence interval for theta.
+
+```{r}
+crit_val <- -qnorm((1-.98)/2)
+mean <- 97.7
+sd <- 1 / sqrt(208)
+
+c(mean - crit_val * sd, mean + crit_val * sd)
+```
+
+2. Write a clearly worded sentence reporting the confidence interval in context.
+
+We are 98% confident that the true mean temperature of a healthy adult is between 97.54 and 97.86 degrees F.
+
+3. Compare the numerical results of the Bayesian and frequentist analysis. Are they similar or different?
+
+The results are very similar (Bayesian: [97.55, 97.87]).
+
+4. How does the interpretation of these results differ between the two approaches?
+
+While the bayesian results are a probability, the frequentist results are how confident we are that the ineterval is correct.
+
+5. From a frequentist perspective, which value, 97.6 or 97.7, is more plausible for theta, rounded to one decimal place? Explain.
+
+We can not say, from this perspective any number in the CI is plausible while any number outside is not.
+
+6. From a Bayesian perspective, which value, 97.6 or 97.7, is more plausible for theta, rounded to one decimal place? Explain.
+
+97.7 would be more plausible since it is closer to the center (observed mean) of the credibility interval.
+
+### Example 9.4
+Continuing Example 9.3. Is population mean healthy human body temperature less than 98.6 degrees Fahrenheit? We’ll now compare a Bayesian analysis to a frequentist (null) hypothesis (significance) test.
+
+1. Conduct an appropriate hypothesis test.
+
+```{r}
+pnorm(mean, 98.6, sd)
+```
+
+2. Write a clearly worded sentence reporting the conclusion of the hypothesis test in context.
+
+We have significant evidence at any reasonable level of significance that the population mean of healthy human body temperature is less than 98.6 degrees F.
+
+3. Write a clearly worded sentence interpreting the p-value in context.
+
+With a small p-value of approx. 0, we have strong evidence that the population mean of healthy human body temperature is less than 98.6 degrees F.
+
+4. Now back to the Bayesian analysis of Example 8.4. Compute the posterior probability that theta is greater than or equal to 98.6.
+
+```{r}
+1 - pnorm(98.6, mean, sd)
+```
+
+5. Compare the numerical values of the posterior probability and the p-value. Are they similar or different?
+
+They are very similar, both approx. 0.
+
+6. How does the interpretation of these results differ between the two approaches?
+
+While the frequentist result answers the probability of observing data as extreme or more extreme than the observed data assuming the true mean, while the bayesian result tells us the probability that the true mean is greater to or equal to some value given the observed data.
