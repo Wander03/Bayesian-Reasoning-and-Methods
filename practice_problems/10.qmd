@@ -23,11 +23,29 @@ Suppose we want to estimate theta, the proportion of Cal Poly students that are 
 
 ### 1. Suppose you choose a Normal prior distribution for theta. Specify your prior mean and prior SD, and explain the reasoning behind your choices. Note: thinking about this part in conjunction with the next part might help. (Of course, your prior doesn’t necessarily to be Normal, but for this example just assume that it is and focus on what your prior mean and prior SD would be.)
 
+I will use a N(.2, .05) since I do not believe that many people are left handed.
 
 ### 2. Find and interpret 50%, 80%, and 98% central prior credible intervals. (Sometimes, it helps to specify a range of values corresponding to a prior probability first and then work backwards to get the prior mean and prior SD.)
 
+```{r}
+cat("50% CI:", qnorm(c(.25, .75), .2, .05))
+cat("\n80% CI:", qnorm(c(.1, .9), .2, .05))
+cat("\n98% CI:", qnorm(c(.01, .99), .2, .05))
+```
+
+There is a 50% chance that between 17% and 23% of Cal Poly students are left handed, prior to observing any data. 
+
+There is an 80% chance that between 14% and 26% of Cal Poly students are left handed, prior to observing any data. 
+
+There is a 98% chance that between 8% and 32% of Cal Poly students are left handed, prior to observing any data. 
 
 ### 3. Describe in words in detail how you would simulate the prior predictive distribution of y.
 
+1. Simulate theta ~ N(.2, .05)
+2. Simulate 35 Cal Poly students using the selected theta, where y = # of successes (Bin(35, theta))
+3. Repeats steps 1 and 2 many times
+4. Summarise the simulated y values
 
 ### 4. Describe in words how you would use the simulation results to estimate the prior predictive probability that y is greater than 5.
+
+Filter down the results to only those where y > 5, then divide this count by the total number of simulated values.
