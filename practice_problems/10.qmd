@@ -1,0 +1,33 @@
+---
+title: "PP 10"
+author: "Andrew Kerr"
+format:
+  html:
+    number_sections: yes
+    code-fold: true
+    toc: true
+    toc-title: "Outline"
+    toc-depth: 3
+embed-resources: true
+---
+
+```{r}
+#| message: false
+#| include: false 
+
+library(tidyverse)
+library(kableExtra)
+```
+
+Suppose we want to estimate theta, the proportion of Cal Poly students that are left handed. We’ll collect data on a sample of 35 Cal Poly students; let y be the number of students in the sample who are left handed.
+
+### 1. Suppose you choose a Normal prior distribution for theta. Specify your prior mean and prior SD, and explain the reasoning behind your choices. Note: thinking about this part in conjunction with the next part might help. (Of course, your prior doesn’t necessarily to be Normal, but for this example just assume that it is and focus on what your prior mean and prior SD would be.)
+
+
+### 2. Find and interpret 50%, 80%, and 98% central prior credible intervals. (Sometimes, it helps to specify a range of values corresponding to a prior probability first and then work backwards to get the prior mean and prior SD.)
+
+
+### 3. Describe in words in detail how you would simulate the prior predictive distribution of y.
+
+
+### 4. Describe in words how you would use the simulation results to estimate the prior predictive probability that y is greater than 5.
