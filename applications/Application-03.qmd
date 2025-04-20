@@ -1,0 +1,287 @@
+---
+title: "STAT 415 Application 3"
+author: "Andrew Kerr"
+date: ''
+format:
+  html:
+    number_sections: yes
+    code-fold: true
+    toc: true
+    toc-title: "Outline"
+    toc-depth: 3
+embed-resources: true
+---
+
+```{r}
+library(knitr)
+
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE
+)
+```
+
+```{r}
+library(tidyverse)
+library(viridis)
+library(kableExtra)
+library(janitor)
+library(dprop)
+library(magrittr)
+```
+
+# Introduction
+
+In this application you will perform a Bayesian analysis of sample data to estimate a population proportion in a context of your choice.
+
+# Instructions
+
+This RMarkdown file provides a template for you to fill in. You are welcome to copy and paste code from handouts or my online notes. Be sure to include all code and relevant output in your submission.
+
+# Submission instructions
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. When you are finished
+
+-   click **Knit** and check to make sure that you have no errors and everything runs properly. (Fix any problems and redo this step until it works.)
+-   Make sure your type your name(s) at the top of the notebook where it says "Type your name(s) here". If you worked in a team, you will submit a single notebook with both names; make sure all names are included.
+-   Submit your completed files in Canvas.
+
+# Tasks
+
+1.  Find a context involving a population proportion for a categorical variable. Ideally, the context should be interesting to you personally.
+
+[Precision and Disclosure in Text and Voice Interviews on Smartphones](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0128337)
+
+The above article is from my STAT 301 class, where we looked at the question:
+
+“In a typical week, about how often do you exercise? ‘Less than 1 time per week’, ‘1 or 2 times per week’, ‘3 times per week’, or ‘4 or more times per week’?"
+
+Focusing on how often respondents chose the most extreme categorical response option in the stigmatized direction "exercising less than 1 time per week".
+
+2.  Clearly define in context the parameter you are trying to estimate (e.g., "population proportion of American adults who have read a book in the last year"). Be sure to clarify how the variable is categorized/measured (e.g., "reading a book counts as...")
+
+$\theta$ = the population proportion of iPhone using American adults who selected the most extreme categorical response option in the stigmatized direction "exercising less than 1 time per week".
+
+3.  Specify your prior distribution for your parameter, explain your reasoning behind your choice, and describe and interpret in context some of the main features of your prior (e.g., prior mean, prior SD, prior credible intervals).
+
+    **Note:** you should specify your prior BEFORE finding sample data. You can use sources as reference when determining your prior, but your prior should NOT be based on the sample data you'll use to determine the posterior. (For example, you might Google something like "what percent of people read a book last year?" and get a quick estimate to help you tune your prior. But you'll need to find sample data below and the source of the sample data should not be the same source as your initial Googling.)
+
+Since this was a survey question, people are not always the most honest. Therefore, I do not think that many people would voluntarily select the least appealing option by social standards. So, my prior distribution is Beta(2, 8). 
+
+```{r}
+d_beta(2, 8) %$%
+  `mean and variance`
+```
+
+```{r}
+cat("50% credible intervals:", round(qbeta(c(.25, .75), 2, 8), 3))
+cat("\n80% credible intervals:", round(qbeta(c(.1, .9), 2, 8), 3))
+cat("\n98% credible intervals:", round(qbeta(c(.01, .99), 2, 8), 3))
+```
+
+- On average, 20% of American adults with iPhones will select the response "exercising less than 1 time per week".
+- The proportion of American adults with iPhones that select the response "exercising less than 1 time per week" varies by 0.12.
+- There is a 98% chance that the true proportion lies between 1.7% and 54.4%.
+
+4.  Find some reliable sample data from a reputable source and cite the source for your sample (the organization that collected the data and a link to the study/article is fine). You just need the sample proportion and sample size (i.e., you don't need individual level data). A sample size in the few hundreds or maybe a thousand is ideal (if the sample size is really large the posterior is basically just a spike at the sample proportion).
+
+    **Note:** you are NOT collecting your own data. Instead, you're finding data from an available source. One suggestion: find an example from a previous STAT class (e.g., STAT 301) that you found interesting, and do a Bayesian analysis.
+
+The link to the article is above (Q1), and the sample proportion is 121/634 = 0.1909.
+
+5.  Use grid approximation to find the posterior distribution of your parameter. Plot prior, likelihood, and posterior on the same plot.
+
+```{r}
+theta_grid <- seq(0, 1, length.out = 1000)
+
+prior <- dbeta(theta_grid, 2, 8)
+prior <- prior / sum(prior)
+
+likelihood <- dbinom(121, 634, theta_grid)
+
+product <- prior * likelihood
+posterior <- product / sum(product)
+
+results <- data.frame(theta = theta_grid, prior, likelihood, posterior)
+
+results %>%
+  ggplot() +
+  geom_col(aes(x = theta, y = prior), fill = "cornflowerblue", alpha = 0.3) +
+  geom_col(aes(x = theta, y = likelihood), fill = "forestgreen", alpha = 0.3) +
+  geom_col(aes(x = theta, y = posterior), fill = "firebrick", alpha = 0.3) +
+  labs(x = "Theta", y = "Probability") +
+  theme_bw()
+```
+
+6.  Describe and interpret in context some of the main features of your posterior (e.g., posterior mean, posterior SD, posterior credible intervals).
+
+```{r}
+posterior_mean <- sum(theta_grid * posterior)
+
+expected_theta_squared <- sum(theta_grid**2 * posterior)
+posterior_variance <- expected_theta_squared - posterior_mean**2
+posterior_sd <- sqrt(posterior_variance)
+
+print(paste("Posterior mean:", round(posterior_mean, 2)))
+print(paste("Posterior SD:", round(posterior_sd, 2)))
+```
+
+```{r}
+cumulative_posterior <- cumsum(posterior)
+lower_98 <- theta_grid[which.min(abs(cumulative_posterior - .01))]
+upper_98 <- theta_grid[which.min(abs(cumulative_posterior - 0.99))]
+
+print(paste("98% Posterior Credibility Interval: (", round(lower_98, 2), ", ", round(upper_98, 2), ")", sep = ""))
+```
+
+- On average, 19% of American adults with iPhones will select the response "exercising less than 1 time per week".
+- The proportion of American adults with iPhones that select the response "exercising less than 1 time per week" varies by 0.02.
+- There is a 98% chance that the true proportion lies between 16% and 23%.
+
+7.  State some conclusions in context; what does your analysis tell you about your parameter?
+
+My analysis tells me that my parameter is around 20% of American adults with iPhones, with a very small amount of uncertainty (small SD).
+
+8.  Investigate how the data was collected. Depending on your source, it might be hard to find information, but do try to look for the survey methodology. Is your sample reasonably representative of your population of interest? Is your variable measured reliably?
+
+This data was collected through an interview with volunteered individuals from Google AdWords, Amazon Mechanical Turk, Facebook Ads, and Craigslist. This limits the scope of my conclusions to somewhat, but I belive that my variable was measured reliably.
+
+9.  Perform a comparable frequentist analysis using whatever software (R, applets, etc) you want. Interpret your results in context. Compare the results of the frequentist and Bayesian analysis. Are the numerical results similar? How are the interpretations different?
+
+- $H_o: \theta = 0.2$
+- $H_o: \theta \ne 0.2$
+
+```{r}
+p_hat <- 121/634
+theta_0 <- 0.2
+
+se <- sqrt(p_hat * (1 - p_hat) / 634)
+ci_lower <- p_hat - 1.96 * se
+ci_upper <- p_hat + 1.96 * se
+
+z <- (p_hat - theta_0) / sqrt(theta_0 * (1 - theta_0) / 634)
+p_value <- 2 * pnorm(-abs(z))
+
+
+
+print(paste("95% CI: [", round(ci_lower, 2), ", ", round(ci_upper, 2), "]", sep = ""))
+print(paste("Z-statistic:", round(z, 2), "p-value:", round(p_value, 4)))
+```
+
+With a large p-value of 0.56, we do not have evidence that proportion of American adults with iPhones that select the response "exercising less than 1 time per week" is different from 0.2.
+
+This lines up with the Bayesian analysis. Especially the confidence interval and credible intervals, these are almost exactly the same intervals!
+
+The interpretations between the two differ in that we can say probability statements about $\theta$ in the Bayesian analysis, while in the frequentest analysis we observe how our data behaves over many samples. 
+
+10. Now choose a different prior and redo your Bayesian analysis. (Try a prior that's substantially different from your original prior.) How sensitive are your results to choice of prior?
+
+```{r}
+theta_grid <- seq(0, 1, length.out = 1000)
+
+prior <- dbeta(theta_grid, 10, 1)
+prior <- prior / sum(prior)
+
+likelihood <- dbinom(121, 634, theta_grid)
+
+product <- prior * likelihood
+posterior <- product / sum(product)
+
+results <- data.frame(theta = theta_grid, prior, likelihood, posterior)
+
+results %>%
+  ggplot() +
+  geom_col(aes(x = theta, y = prior), fill = "cornflowerblue", alpha = 0.3) +
+  geom_col(aes(x = theta, y = likelihood), fill = "forestgreen", alpha = 0.3) +
+  geom_col(aes(x = theta, y = posterior), fill = "firebrick", alpha = 0.3) +
+  labs(x = "Theta", y = "Probability") +
+  theme_bw()
+```
+
+```{r}
+posterior_mean <- sum(theta_grid * posterior)
+
+expected_theta_squared <- sum(theta_grid**2 * posterior)
+posterior_variance <- expected_theta_squared - posterior_mean**2
+posterior_sd <- sqrt(posterior_variance)
+
+print(paste("Posterior mean:", round(posterior_mean, 2)))
+print(paste("Posterior SD:", round(posterior_sd, 2)))
+```
+
+The posterior's shape does not change very much, however it is shifted towards the right (to the prior), rather than centered on the likelihood. It does not seem very sensitive to my choice of prior.
+
+11. Now imagine the sample proportion were much different from what you observed (same sample size). Make up a number for the sample proportion and repeat the Bayesian analysis. Compare the posterior to the one based on the real sample and your original prior; how do the results change?
+
+```{r}
+theta_grid <- seq(0, 1, length.out = 1000)
+
+prior <- dbeta(theta_grid, 2, 8)
+prior <- prior / sum(prior)
+
+likelihood <- dbinom(500, 634, theta_grid)
+
+product <- prior * likelihood
+posterior <- product / sum(product)
+
+results <- data.frame(theta = theta_grid, prior, likelihood, posterior)
+
+results %>%
+  ggplot() +
+  geom_col(aes(x = theta, y = prior), fill = "cornflowerblue", alpha = 0.3) +
+  geom_col(aes(x = theta, y = likelihood), fill = "forestgreen", alpha = 0.3) +
+  geom_col(aes(x = theta, y = posterior), fill = "firebrick", alpha = 0.3) +
+  labs(x = "Theta", y = "Probability") +
+  theme_bw()
+```
+
+```{r}
+posterior_mean <- sum(theta_grid * posterior)
+
+expected_theta_squared <- sum(theta_grid**2 * posterior)
+posterior_variance <- expected_theta_squared - posterior_mean**2
+posterior_sd <- sqrt(posterior_variance)
+
+print(paste("Posterior mean:", round(posterior_mean, 2)))
+print(paste("Posterior SD:", round(posterior_sd, 2)))
+```
+
+The spread of my posterior is still very small, however the mean drastically changes since my posterior seems to be highly influenced by the data. 
+
+12. Now imagine the sample size were much different from what you observed (same sample proportion). Make up a number for the sample size and repeat the Bayesian analysis. (If your sample size is already big, choose a small sample size, and vice versa.) Compare the posterior to the one based on the real sample and your original prior; how do the results change?
+
+```{r}
+theta_grid <- seq(0, 1, length.out = 1000)
+
+prior <- dbeta(theta_grid, 2, 8)
+prior <- prior / sum(prior)
+
+likelihood <- dbinom(floor(121/10), floor(634/10), theta_grid)
+
+product <- prior * likelihood
+posterior <- product / sum(product)
+
+results <- data.frame(theta = theta_grid, prior, likelihood, posterior)
+
+results %>%
+  ggplot() +
+  geom_col(aes(x = theta, y = prior), fill = "cornflowerblue", alpha = 0.3) +
+  geom_col(aes(x = theta, y = likelihood), fill = "forestgreen", alpha = 0.3) +
+  geom_col(aes(x = theta, y = posterior), fill = "firebrick", alpha = 0.3) +
+  labs(x = "Theta", y = "Probability") +
+  theme_bw()
+```
+
+```{r}
+posterior_mean <- sum(theta_grid * posterior)
+
+expected_theta_squared <- sum(theta_grid**2 * posterior)
+posterior_variance <- expected_theta_squared - posterior_mean**2
+posterior_sd <- sqrt(posterior_variance)
+
+print(paste("Posterior mean:", round(posterior_mean, 2)))
+print(paste("Posterior SD:", round(posterior_sd, 2)))
+```
+
+With a smaller sample size but same sample proportion, we see a slightly larger SD, but approximately the same mean.
