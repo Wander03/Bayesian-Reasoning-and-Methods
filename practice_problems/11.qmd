@@ -1,0 +1,64 @@
+---
+title: "PP 11"
+author: "Andrew Kerr"
+format:
+  html:
+    number_sections: yes
+    code-fold: true
+    toc: true
+    toc-title: "Outline"
+    toc-depth: 3
+embed-resources: true
+---
+
+```{r}
+#| message: false
+#| include: false 
+
+library(tidyverse)
+library(kableExtra)
+```
+
+Assume body temperatures (degrees Fahrenheit) of healthy adult humans follow a Normal distribution with unknown mean $\theta$ and known standard deviation $\sigma$ = 1. We wish to estimate $\theta$, the population mean healthy human body temperature, based on sample data. (Note: it’s unrealistic to assume the population standard deviation is known. We’ll consider the case of unknown standard deviation later.)
+
+We’ll assume the prior distribution of $\theta$ is a Normal distribution. We’ll assume a prior mean of 98.6 since that is what most “people on the street” would say is average human body temperature. But we’re not sure of what our prior SD should be, so we’ll use prior predictive tuning to determine a reasonable value.
+
+Let’s start with a prior SD of 2, which is a fairly uninformative prior, assigning relative high prior probability to a wide range of values. For example, a 68% prior credible interval for $\theta$ based on this prior is [96.6, 100.6]; 95% is [94.6, 102.6].
+
+1. Use simulation to approximate the prior predictive distribution of body temperatures for a large sample of healthy adult humans. Make a histogram of the values. Explain why the simulation results suggest we might want to change our model.
+
+```{r}
+set.seed(123)
+
+sim_theta <- rnorm(10000, 98.6, 2)
+sim_y <- rnorm(10000, sim_theta, 1)
+
+ggplot() +
+  geom_histogram(aes(x = sim_y, y = after_stat(density)), 
+                 fill = "cornflowerblue",
+                 bins = 60) +
+  theme_bw() +
+  labs(x = "Body temp (y)")
+```
+
+The results suggest that we might want to change our model because it is suggusting very unhealthy body temperatures at a high plausibility (> 100 degrees F).
+
+2. Choose another value for the prior SD of $\theta$ and rerun the prior predictive simulation. Continue experimenting with different values of prior SD until you have what you think is a reasonable prior predictive distribution of healthy adult human body temperatures. Then say what you’re prior distribution is. There is no one right answer here, but explain your reasoning behind your final choice for the prior SD.
+
+```{r}
+set.seed(123)
+
+sim_theta <- rnorm(10000, 98.6, 0.1)
+sim_y <- rnorm(10000, sim_theta, 1)
+
+ggplot() +
+  geom_histogram(aes(x = sim_y, y = after_stat(density)), 
+                 fill = "cornflowerblue",
+                 bins = 60) +
+  theme_bw() +
+  labs(x = "Body temp (y)")
+```
+
+With a smaller SD of 0.1, most values in the simulation above are in a healthy range of temperatures!
+
+**Note:** Prior SD is just one assumption of many. If the prior predictive distribution looks unreasonable, it could be because our choice for prior mean was off, or because our assumption that body temperatures follow a Normal distribution was not appropriate, or the assumption that $\sigma$ = 1 is not reasonable, etc. We’re just focusing on prior SD here to keep things simple.
