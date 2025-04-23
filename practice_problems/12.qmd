@@ -1,0 +1,88 @@
+---
+title: "PP 12"
+author: "Andrew Kerr"
+format:
+  html:
+    number_sections: yes
+    code-fold: true
+    toc: true
+    toc-title: "Outline"
+    toc-depth: 3
+embed-resources: true
+---
+
+```{r}
+#| message: false
+#| include: false 
+
+library(tidyverse)
+library(kableExtra)
+```
+
+Suppose we want to estimate 
+
+- $\theta_1$, the proportion of Cal Poly students that have read the novel The Great Gatsby
+
+- $\theta_2$, the proportion of Cal Poly students that have seen the movie Gone with the Wind
+
+1. For each of $\theta_1$ and $\theta_2$ formulate your prior distribution as a Beta distribution. (Of course, you don't necessarily need to assume a Beta distribution prior, but do it for this exercise.)  Explain your reasoning behind your choices. For each prior specify (in whatever order makes most sense to you)
+
+- both shape parameters
+
+- the prior mean
+
+- the prior SD
+
+- prior 50%, 80%, and 98% credible intervals (use software - qbeta in R). Note: central credible intervals are fine, but depending on the shape of your prior you might consider other credible intervals.
+
+```{r}
+mu_1 <- 0.75
+sigma_1 <- 0.2
+
+alpha_1 <- mu_1**2 * ((1 - mu_1) / sigma_1**2 - 1 / mu_1); alpha_1
+beta_1 <- alpha_1 * (1 / mu_1 - 1); beta_1
+
+qbeta(c(0.25, 0.75), alpha_1, beta_1)
+qbeta(c(0.10, 0.90), alpha_1, beta_1)
+qbeta(c(0.01, 0.99), alpha_1, beta_1)
+```
+
+```{r}
+mu_2 <- 0.2
+sigma_2 <- 0.35
+
+alpha_2 <- mu_2**2 * ((1 - mu_2) / sigma_2**2 - 1 / mu_2); alpha_2
+beta_2 <- alpha_2 * (1 / mu_2 - 1); beta_2
+
+qbeta(c(0.25, 0.75), alpha_2, beta_2)
+qbeta(c(0.10, 0.90), alpha_2, beta_2)
+qbeta(c(0.01, 0.99), alpha_2, beta_2)
+```
+
+I am assuming that many students had to read the Great Gatsby for an English class at some point, but not as many went out of their way to watch the movie Gone with the Wind. I am more certain about the GG than GWTW. 
+
+2. Compare the two prior distributions.  Which distribution exhibits greater prior uncertainty? Why?
+
+The distribution for GWTW has more uncertainty due to its larger SD.
+
+3. In a class of 35 Cal Poly students, 23 have read the Great Gatsby. Starting with your prior distribution from part 1, identify the posterior distribution of $\theta_1$ given this sample data. Compute
+
+- the posterior mean
+
+- the posterior SD
+
+- posterior 50%, 80%, and 98% credible intervals (use software - qbeta in R).
+
+```{r}
+alpha <- alpha_1 + 23; alpha
+beta <- beta_1 + 35 - 23; beta
+
+post_mean <- alpha / (alpha + beta); post_mean
+
+post_sd <- sqrt(post_mean * (1 - post_mean) / (alpha + beta + 1)); post_sd
+
+qbeta(c(0.25, 0.75), alpha, beta)
+qbeta(c(0.10, 0.90), alpha, beta)
+qbeta(c(0.01, 0.99), alpha, beta)
+```
+
