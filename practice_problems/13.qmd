@@ -1,0 +1,213 @@
+---
+title: "PP 13"
+author: "Andrew Kerr"
+format:
+  html:
+    number_sections: yes
+    code-fold: true
+    toc: true
+    toc-title: "Outline"
+    toc-depth: 3
+embed-resources: true
+---
+
+```{r}
+#| message: false
+#| include: false 
+
+library(tidyverse)
+library(kableExtra)
+```
+
+You wish to estimate $\theta$ , the proportion of Cal Poly students whose favorite genre of music is 80s-90s indie/alternative rock. (Hey, that's my favorite genre of music!)  You think about it's 25%, and you're almost certain it's less than 50%.  Consider two prior distributions
+
+- Uniform(0, 0.5)
+
+- Beta(250, 750)
+
+1. For each prior, find
+
+- The prior mean
+
+- The prior SD
+
+- The prior probability that $\theta$ is greater than 0.5
+
+- Which prior corresponds to a greater degree of certainty that theta is close to 0.25?
+
+```{r}
+print("Unif(0, 0.5)")
+print(paste("Mean:", qunif(.5, 0, .5)))
+print(paste("SD:", round(.5/sqrt(12), 2)))
+print(paste("P(theta > 0.5):", 1 - punif(.5, 0, .5)))
+
+print("")
+
+print("Beta(250, 750)")
+print(paste("Mean:", round(qbeta(.5, 250, 750), 2)))
+print(paste("SD:", round(sqrt((.25 * (1-.25)) / (250 + 750 + 1)), 2)))
+print(paste("P(theta > 0.5):", 1 - pbeta(.5, 250, 750)))
+```
+
+The beta prior has a larger degree of certainty that theta is close to 0.25
+
+2. Suppose that in a sample of 100 students, 60 say it's their favorite. Starting with each prior
+
+- Identify the posterior distribution
+
+- Find the posterior mean
+
+- Find the posterior SD
+
+- Find the posterior probability that $\theta$ is greater than 0.5
+
+```{r}
+theta <- seq(0, 1, .0001)
+n <- 100
+s <- 60
+
+prior <- dunif(theta, 0, .5)
+prior <- prior / sum(prior)
+
+likelihood <- dbinom(s, n, theta)
+
+posterior <- prior * likelihood
+posterior <- posterior / sum(posterior)
+
+post_mean <- sum(theta * posterior); post_mean
+post_sd <- sqrt(sum(theta ^ 2 * posterior) - post_mean ^ 2); post_sd
+# 1 - punif(.5, post_mean, post_sd) # Not uniform, is not a known distribution
+```
+
+```{r}
+theta <- seq(0, 1, .0001)
+n <- 100
+s <- 60
+
+alpha_prior <- 250
+beta_prior <- 750
+prior <- dbeta(theta, alpha_prior, beta_prior)
+
+alpha_post <- alpha_prior + s
+beta_post <- beta_prior + n - s
+
+post_mean <- alpha_post / (alpha_post + beta_post);post_mean
+post_sd <- sqrt(post_mean * (1 - post_mean) / (alpha_post + beta_post + 1)); post_sd
+1 - pbeta(.5, alpha_post, beta_post)
+```
+
+3. Repeat part 2 for a sample of 600/1000
+
+```{r}
+theta <- seq(0, 1, .0001)
+n <- 1000
+s <- 600
+
+prior <- dunif(theta, 0, .5)
+prior <- prior / sum(prior)
+
+likelihood <- dbinom(s, n, theta)
+
+posterior <- prior * likelihood
+posterior <- posterior / sum(posterior)
+
+post_mean <- sum(theta * posterior); post_mean
+post_sd <- sqrt(sum(theta ^ 2 * posterior) - post_mean ^ 2); post_sd
+# 1 - punif(.5, post_mean, post_sd) # Not uniform, is not a known distribution
+```
+
+```{r}
+theta <- seq(0, 1, .0001)
+n <- 1000
+s <- 600
+
+alpha_prior <- 250
+beta_prior <- 750
+prior <- dbeta(theta, alpha_prior, beta_prior)
+
+alpha_post <- alpha_prior + s
+beta_post <- beta_prior + n - s
+
+post_mean <- alpha_post / (alpha_post + beta_post);post_mean
+post_sd <- sqrt(post_mean * (1 - post_mean) / (alpha_post + beta_post + 1)); post_sd
+1 - pbeta(.5, alpha_post, beta_post)
+```
+
+4. Repeat part 2 for a sample of 1200/2000
+
+```{r}
+theta <- seq(0, 1, .0001)
+n <- 2000
+s <- 1200
+
+prior <- dunif(theta, 0, .5)
+prior <- prior / sum(prior)
+
+likelihood <- dbinom(s, n, theta)
+
+posterior <- prior * likelihood
+posterior <- posterior / sum(posterior)
+
+post_mean <- sum(theta * posterior); post_mean
+post_sd <- sqrt(sum(theta ^ 2 * posterior) - post_mean ^ 2); post_sd
+# 1 - punif(.5, post_mean, post_sd) # Not uniform, is not a known distribution
+```
+
+```{r}
+theta <- seq(0, 1, .0001)
+n <- 2000
+s <- 1200
+
+alpha_prior <- 250
+beta_prior <- 750
+prior <- dbeta(theta, alpha_prior, beta_prior)
+
+alpha_post <- alpha_prior + s
+beta_post <- beta_prior + n - s
+
+post_mean <- alpha_post / (alpha_post + beta_post);post_mean
+post_sd <- sqrt(post_mean * (1 - post_mean) / (alpha_post + beta_post + 1)); post_sd
+1 - pbeta(.5, alpha_post, beta_post)
+```
+5. Repeat part 2 for a sample of 1800/3000
+
+```{r}
+theta <- seq(0, 1, .0001)
+n <- 3000
+s <- 1800
+
+prior <- dunif(theta, 0, .5)
+prior <- prior / sum(prior)
+
+likelihood <- dbinom(s, n, theta)
+
+posterior <- prior * likelihood
+posterior <- posterior / sum(posterior)
+
+post_mean <- sum(theta * posterior); post_mean
+post_sd <- sqrt(sum(theta ^ 2 * posterior) - post_mean ^ 2); post_sd
+# 1 - punif(.5, post_mean, post_sd) # Not uniform, is not a known distribution
+```
+
+```{r}
+theta <- seq(0, 1, .0001)
+n <- 3000
+s <- 1800
+
+alpha_prior <- 250
+beta_prior <- 750
+prior <- dbeta(theta, alpha_prior, beta_prior)
+
+alpha_post <- alpha_prior + s
+beta_post <- beta_prior + n - s
+
+post_mean <- alpha_post / (alpha_post + beta_post);post_mean
+post_sd <- sqrt(post_mean * (1 - post_mean) / (alpha_post + beta_post + 1)); post_sd
+1 - pbeta(.5, alpha_post, beta_post)
+```
+
+6. Summarize your results in a few sentences.  What's the moral?
+
+Even a very "unassuming" prior will eventually be moved with enough data, unless it assigned a probability of 0 to the value (looking at you Uniform prior) 
+
+You can use software as much as you want and just report the results.  For the Uniform(0, 0.5) prior, you might want to first write down the prior and likelihood; don't forget to specify the corresponding possible values.
