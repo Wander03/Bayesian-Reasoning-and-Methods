@@ -1,0 +1,79 @@
+---
+title: "STAT 415 Application 4"
+author: "Andrew Kerr"
+date: ''
+format:
+  html:
+    number_sections: yes
+    code-fold: true
+    toc: true
+    toc-title: "Outline"
+    toc-depth: 3
+embed-resources: true
+---
+
+# Set up
+
+```{r}
+library(knitr)
+
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE
+)
+```
+
+
+```{r}
+library(tidyverse)
+library(viridis)
+library(kableExtra)
+library(janitor)
+```
+
+# Introduction
+
+You have two friends, Mabel and Dipper, who each makes a claim.
+
+Mabel says: “I’ve been learning to use the Force! (Like in Star Wars.) If you roll a fair four-sided die, I can use the Force to make it land on a 1Links to an external site.! I’m still learning, so I can’t do it every time, but it definitely works sometimes!”
+
+Dipper, a baseball player, says: “Ever since baseball season ended, I’ve been practicing really hard to improve my hitting. Last season I got hits in 25% of my at bats, but I’ve definitely improved since then.”
+
+Before reading further, stop to consider: whose claim - Mabel’s or Dipper’s - is initially more convincing? Or are you equally convinced? Why? To put it another way, whose claim are you initially more skeptical of? Or are you equally skeptical? To put it one more way, whose claim would require more data to convince you?
+
+You decide to collect some data from Mabel and Dipper to investigate their claims.
+
+To investigate Mabel’s claim you roll a fair four-sided die and have Mabel use the Force to make the die land on 1. Let $\theta_M$ be the true probability that the die lands on 1 with Mabel’s use of the Force. After 100 rolls, the die has landed on 1 33 times. (You can assume the die is fair, the rolls are independent, and there is no funny business in data collection (other than Mabel’s attempted use of the Force).)
+
+To investigate Dipper’s claim you have him take a series of at bats. Let $\theta_D$ be the true probability that Dipper gets a hit in any single at bat. After 100 at bats, Dipper has gotten 33 hits. (You can assume Dipper’s probability of getting a hit on any single at bat is the same for each at bat, the at bats are independent, you can ignore baseball context like walks/etc., and there is no funny business in data collection.)
+
+1. Use the results of the 100 trials to conduct a null hypothesis test for Mabel and compute the p-value.
+
+2. Repeat the previous part for Dipper.
+
+3. Based on the results of the hypothesis tests, whose claim - Mabel’s or Dipper’s - is more convincing? Or are you equally convinced? Why?
+
+4. Now consider a Bayesian analysis for Mabel. Which one of the following prior distributions for represents the most prior skepticism about Mabel’s claim? Choose one and explain your reasoning.
+
+-   Beta(0, 0)
+-   Beta(0.25, 0)
+-   Beta(0, 0.25)
+-   Beta(1, 3)
+-   Beta(1, 4)
+-   Beta(1, 1)
+-   Beta(25, 0)
+-   Beta(25, 75)
+-   Beta(25, 100)
+-   Beta(75, 25)
+
+5. Using the prior from the previous part and the results of the 100 trials, compute the posterior distribution of $\theta_M$, and find 50%, 80%, and 98% posterior credible intervals.
+
+6. Now consider a Bayesian analysis for Dipper. Choose a Beta prior distribution for $\theta_D$ based on your initial assessment of Dipper’s claim before collecting data. The Beta distribution does not need to come from the list above. Explain your reasoning.
+
+7. Using the prior from the previous part and the results of the 100 at bats, compute the posterior distribution of $\theta_D$, and find 50%, 80%, and 98% posterior credible intervals.
+
+8. Based on the results of the Bayesian posterior analyses, whose claim - Mabel’s or Dipper’s - is more convincing? Or are you equally convinced? Why?
+
+9. In this situation, which analysis do you prefer: the frequentist analysis or the Bayesian analysis? Why? There is no right or wrong answer to this question, but you should state a clear preference and explain why it is more appealing to you.
+
