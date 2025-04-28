@@ -1,0 +1,68 @@
+---
+title: "PP 14"
+author: "Andrew Kerr"
+format:
+  html:
+    number_sections: yes
+    code-fold: true
+    toc: true
+    toc-title: "Outline"
+    toc-depth: 3
+embed-resources: true
+---
+
+```{r}
+#| message: false
+#| include: false 
+
+library(tidyverse)
+library(kableExtra)
+library(brms)
+```
+
+Use brms to reproduce Example 12.3 in the handouts. Assume a Beta(3, 1) prior for theta, observe a sample proportion of 31/35, and use brms to approximate the posterior distribution. Use the brms results to plot the posterior distribution, and find the posterior mean, SD, and 50%, 80%, and 98% credible intervals. Compare the brms results to the results from Example 12.3 (and Example 10.4).
+
+```{r}
+# Data
+data <- list(y = 31, n = 35)
+
+# Fit the model
+fit <- brm(
+    y | trials(n) ~ 1,
+    data = data,
+    family = binomial(link = "identity"),
+    prior = prior(beta(3, 1), class = "Intercept", lb = 0, ub = 1),
+    iter = 11000,
+    warmup = 1000,
+    chains = 1,
+    seed = 123
+)
+```
+
+```{r}
+posterior_samples <- as_draws_df(fit)
+theta_samples <- posterior_samples$b_Intercept
+
+# Posterior mean and SD
+post_mean <- mean(theta_samples)
+post_sd <- sd(theta_samples)
+
+# Credible intervals
+ci_50 <- quantile(theta_samples, c(0.25, 0.75))
+ci_80 <- quantile(theta_samples, c(0.10, 0.90))
+ci_98 <- quantile(theta_samples, c(0.01, 0.99))
+
+cat("Posterior Mean:", post_mean, "\n")
+cat("Posterior SD:", post_sd, "\n")
+cat("50% Credible Interval:", ci_50, "\n")
+cat("80% Credible Interval:", ci_80, "\n")
+cat("98% Credible Interval:", ci_98, "\n")
+```
+
+```{r}
+ggplot(data.frame(theta = theta_samples), aes(x = theta)) +
+    geom_density(fill = "cornflowerblue", alpha = 0.5) +
+    labs(title = "Posterior Distribution of theta", x = "theta", y = "Density") +
+    theme_bw()
+```
+

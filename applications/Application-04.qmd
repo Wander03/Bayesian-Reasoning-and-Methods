@@ -72,83 +72,225 @@ Use simulation to approximate the prior predictive distribution of $y$ and plot 
 Explain why a Beta(50, 50) distribution seems like an unreasonable choice for the prior of $\theta$.
 
 ```{r}
-# Enter your code here - add as many chunks as you want
+set.seed(123)
+
+sim_theta <- rbeta(10000, 50, 50)
+sim_y <- rbinom(10000, 457, sim_theta)
+
+ggplot() +
+  geom_histogram(aes(x = sim_y/457, y = after_stat(density)), 
+                 fill = "cornflowerblue",
+                 bins = 45) +
+  theme_bw() +
+  labs(title = "Proportion of Red Wins (y/457) ~ Beta(50, 50)", x = "Proportion")
 ```
 
-**TYPE YOUR RESPONSES HERE.**
+Beta(50, 50) seems unreasonable because of how much it varies. Assuming color has no effect, then we would predict theta to be 0.5. Although 0.5 is the center of this distribution, 0.4 and 0.6 are still very plausible.
 
 (@) Assume a Beta(200, 200) prior distribution for $\theta$.
 Use simulation to approximate the prior predictive distribution of $y$ and plot it.
 (It might make more sense to plot $y/457$.)
 Explain why a Beta(200, 200) distribution seems like a more reasonable choice than Beta(50, 50) for the prior of $\theta$.
 
-
 ```{r}
-# Enter your code here - add as many chunks as you want
+set.seed(123)
+
+sim_theta <- rbeta(10000, 200, 200)
+sim_y <- rbinom(10000, 457, sim_theta)
+
+ggplot() +
+  geom_histogram(aes(x = sim_y/457, y = after_stat(density)), 
+                 fill = "cornflowerblue",
+                 bins = 45) +
+  theme_bw() +
+  labs(title = "Proportion of Red Wins (y/457) ~ Beta(200, 200)", x = "Proportion")
 ```
 
-**TYPE YOUR RESPONSES HERE.**
-
+Beta(200, 200) seems to be a more reasonable distribution because it has a smaller spread/variability. It is also centered at 0.5, with most of the plausibility bunched up at this center.
 
 (@) Assume a Beta(50, 50) prior distribution for $\theta$.
 The researchers analyzed a total of 457 matches, and they found that the competitor wearing red defeated the competitor wearing blue in 248 of these matches.
 Identify the posterior distribution, its mean and SD, and compute *and interpret* central 50%, 80%, and 98% posterior credible intervals.
 Create a plot showing prior, (scaled) likelihood, and posterior.
 
-
 ```{r}
-# Enter your code here - add as many chunks as you want
+# Beta prior
+alpha_prior = 50
+beta_prior = 50
+
+# data
+n = 457
+y = 248
+
+# Beta posterior
+alpha_post = alpha_prior + y
+beta_post = beta_prior + n - y
+
+# scaled likelihood, depends on data: n, y
+likelihood_scaled <- function(theta) {
+  likelihood <- function(theta) {
+    dbinom(x = y, size = n, prob = theta)
+  }
+  scaling_constant <- integrate(likelihood, lower = 0, upper = 1)[[1]]
+  likelihood(theta) / scaling_constant
+}
+
+# Plot
+ggplot(data.frame(x = c(0, 1)),
+       aes(x = x)) +
+  # prior
+  stat_function(fun = dbeta,
+                args = list(shape1 = alpha_prior,
+                            shape2 = beta_prior),
+                col = "cornflowerblue",
+                linewidth = 1) +
+  # (scaled) likelihood
+  stat_function(fun = likelihood_scaled,
+                col = "forestgreen",
+                linewidth = 1) +
+  # posterior
+  stat_function(fun = dbeta,
+                args = list(shape1 = alpha_post,
+                            shape2 = beta_post),
+                col = "firebrick",
+                linewidth = 1) +
+  labs(x = "theta",
+       y = "") +
+  theme_bw()
 ```
 
-**TYPE YOUR RESPONSES HERE.**
+```{r}
+post_mean <- alpha_post / (alpha_post + beta_post)
+post_var <- (alpha_post * beta_post) / 
+            ((alpha_post + beta_post)^2 * (alpha_post + beta_post + 1))
+post_sd <- sqrt(post_var)
 
+ci_50 <- qbeta(c(0.25, 0.75), alpha_post, beta_post)
+ci_80 <- qbeta(c(0.10, 0.90), alpha_post, beta_post)
+ci_98 <- qbeta(c(0.01, 0.99), alpha_post, beta_post)
+
+cat("Posterior Mean:", post_mean, "\n")
+cat("Posterior SD:", post_sd, "\n")
+cat("50% Credible Interval:", ci_50, "\n")
+cat("80% Credible Interval:", ci_80, "\n")
+cat("98% Credible Interval:", ci_98, "\n")
+```
+
+- There is a 50% probability that the true proportion of red uniform wins lies between 0.52 and 0.55, given our data and prior beliefs.
+
+- There is a 80% probability that the true proportion of red uniform wins lies between 0.51 and 0.56, given our data and prior beliefs.
+
+- There is a 98% probability that the true proportion of red uniform wins lies between 0.49 and 0.58, given our data and prior beliefs.
 
 (@) Assume a Beta(200, 200) prior distribution for $\theta$.
 The researchers analyzed a total of 457 matches, and they found that the competitor wearing red defeated the competitor wearing blue in 248 of these matches.
 Identify the posterior distribution, its mean and SD, and compute *and interpret* central 50%, 80%, and 98% posterior credible intervals.
 Create a plot showing prior, (scaled) likelihood, and posterior.
 
-
 ```{r}
-# Enter your code here - add as many chunks as you want
+# Beta prior
+alpha_prior = 200
+beta_prior = 200
+
+# data
+n = 457
+y = 248
+
+# Beta posterior
+alpha_post = alpha_prior + y
+beta_post = beta_prior + n - y
+
+# scaled likelihood, depends on data: n, y
+likelihood_scaled <- function(theta) {
+  likelihood <- function(theta) {
+    dbinom(x = y, size = n, prob = theta)
+  }
+  scaling_constant <- integrate(likelihood, lower = 0, upper = 1)[[1]]
+  likelihood(theta) / scaling_constant
+}
+
+# Plot
+ggplot(data.frame(x = c(0, 1)),
+       aes(x = x)) +
+  # prior
+  stat_function(fun = dbeta,
+                args = list(shape1 = alpha_prior,
+                            shape2 = beta_prior),
+                col = "cornflowerblue",
+                linewidth = 1) +
+  # (scaled) likelihood
+  stat_function(fun = likelihood_scaled,
+                col = "forestgreen",
+                linewidth = 1) +
+  # posterior
+  stat_function(fun = dbeta,
+                args = list(shape1 = alpha_post,
+                            shape2 = beta_post),
+                col = "firebrick",
+                linewidth = 1) +
+  labs(x = "theta",
+       y = "") +
+  theme_bw()
 ```
 
-**TYPE YOUR RESPONSES HERE.**
+```{r}
+post_mean <- alpha_post / (alpha_post + beta_post)
+post_var <- (alpha_post * beta_post) / 
+            ((alpha_post + beta_post)^2 * (alpha_post + beta_post + 1))
+post_sd <- sqrt(post_var)
 
+ci_50 <- qbeta(c(0.25, 0.75), alpha_post, beta_post)
+ci_80 <- qbeta(c(0.10, 0.90), alpha_post, beta_post)
+ci_98 <- qbeta(c(0.01, 0.99), alpha_post, beta_post)
+
+cat("Posterior Mean:", post_mean, "\n")
+cat("Posterior SD:", post_sd, "\n")
+cat("50% Credible Interval:", ci_50, "\n")
+cat("80% Credible Interval:", ci_80, "\n")
+cat("98% Credible Interval:", ci_98, "\n")
+```
+
+- There is a 50% probability that the true proportion of red uniform wins lies between 0.51 and 0.53, given our data and prior beliefs.
+
+- There is a 80% probability that the true proportion of red uniform wins lies between 0.50 and 0.54, given our data and prior beliefs.
+
+- There is a 98% probability that the true proportion of red uniform wins lies between 0.48 and 0.56, given our data and prior beliefs.
 
 (@) How sensitive are the results to the choice of prior (Beta(50, 50) versus Beta(200, 200))?
 
-**TYPE YOUR RESPONSES HERE.**
-
+The results are not very sensitive to the prior, both resulting in roughly the same posterior mean and SD.
 
 (@) Express the posterior mean as a weighted average of the prior mean and the sample proportion.
 (Use the results based on the Beta(200, 200) prior.)
 
+```{r}
+prior_mean <- alpha_prior / (alpha_prior + beta_prior)
+tot <- alpha_post + beta_post
 
-**TYPE YOUR RESPONSES HERE.**
-
+prior_mean * ((alpha_prior + beta_prior) / tot) + y / n * (n / tot)
+```
 
 (@) We might say that if the probability of winning by the competitor wearing red is between 0.49 and 0.51, then any color advantage is small enough to be considered unimportant.
 In other words $\theta$ outside of 0.49 and 0.51 could be interpreted as one color giving a meaningful advantage.
 Compute and interpret the posterior probability that $\theta$ is not in [0.49, 0.51].
 (If you disagree with the range [0.49, 0.51] feel free to use different values.)
 
-
-
 ```{r}
-# Enter your code here - add as many chunks as you want
+prob_below <- pbeta(0.49, alpha_post, beta_post)
+prob_above <- 1 - pbeta(0.51, alpha_post, beta_post)
+
+prob_outside <- prob_below + prob_above
+
+cat("Probability θ < 0.49:", prob_below, "\n")
+cat("Probability θ > 0.51:", prob_above, "\n")
+cat("Total P(θ outside [0.49, 0.51]):", prob_outside, "\n")
 ```
 
-**TYPE YOUR RESPONSES HERE.**
-
+The probability that theta is not in the interval 0.49 to 0.51 is 80%. 
 
 (@) Write 1-3 clearly worded sentences reporting the conclusions of your analysis in this context.
 
-
-**TYPE YOUR RESPONSES HERE.**
-
-
-
+Using a prior of Beta(200, 200), we have a posterior mean of 0.52. If we assume that if the probability of a red uniform winning is between 0.49 and 0.51 is not a significant color effect, then with our data and prior we have an 80% probability of having a meaningful color effect. 
 
 (@) A Beta(200, 200) distribution is closely approximated by a Normal distribution with mean 0.5 and SD 0.025.
 Suppose we had assumed a N(0.5, 0.025) prior for $\theta$, with the 248/457 sample data.
@@ -157,21 +299,58 @@ Create a plot showing prior, (scaled) likelihood, and posterior.
 How does it compare to the posterior from the previous part (with the Beta(200, 200) prior)?
 
 ```{r}
-# Enter your code here - add as many chunks as you want
+theta <- seq(0.4, 0.6, length.out = 1000)
+
+# Data
+n <- 457
+y <- 248
+
+# Normal prior: N(0.5, 0.025)
+prior <- dnorm(theta, mean = 0.5, sd = 0.025)
+scaled_prior <- prior / sum(prior)
+
+# Likelihood: Binomial(n, y | theta)
+likelihood <- dbinom(y, size = n, prob = theta)
+scaled_likelihood <- likelihood / sum(likelihood)
+
+# Posterior
+posterior <- prior * likelihood
+posterior <- posterior / sum(posterior)
+
+ggplot(data.frame(theta = theta), aes(x = theta)) +
+  # Prior (Normal)
+  geom_line(aes(y = scaled_prior), color = "cornflowerblue", linewidth = 1) +
+  # Scaled likelihood
+  geom_line(aes(y = scaled_likelihood), color = "forestgreen", linewidth = 1) +
+  # Posterior
+  geom_line(aes(y = posterior), color = "firebrick", linewidth = 1) +
+  labs(x = "theta", y = "Density", 
+       title = "Normal Prior (Blue) vs. Likelihood (Green) vs. Posterior (Red)") +
+  theme_bw()
 ```
 
-**TYPE YOUR RESPONSES HERE.**
+```{r}
+post_mean <- sum(theta * posterior)
+post_sd <- sqrt(sum(theta^2 * posterior) - post_mean^2)
 
+cat("Posterior Mean:", post_mean, "\n")
+cat("Posterior SD:", post_sd, "\n")
+```
+
+The mean and SD are very close to being the same!
 
 (@) Use simulation to approximation the posterior distribution of the odds $\phi = \frac{\theta}{1-\theta}$.
 Find and interpret in context a central 98% credible interval for $\phi$.
 (Use the posterior based on the Beta(200, 200) prior.)
 
 ```{r}
-# Enter your code here - add as many chunks as you want
+set.seed(123)
+
+theta_samples <- rbeta(10000, alpha_post, beta_post)
+phi_samples <- theta_samples / (1 - theta_samples)
+
+ci_98 <- quantile(phi_samples, probs = c(0.01, 0.99))
+cat("98% Credible Interval for ϕ:", ci_98, "\n")
 ```
 
-**TYPE YOUR RESPONSES HERE.**
-
-
-
+The odds ratio of red uniforms have an advantage over blue is between 0.94 and 1.3 with 98% probability.
