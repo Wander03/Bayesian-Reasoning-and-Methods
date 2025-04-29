@@ -1,0 +1,58 @@
+---
+title: "PP 15"
+author: "Andrew Kerr"
+format:
+  html:
+    number_sections: yes
+    code-fold: true
+    toc: true
+    toc-title: "Outline"
+    toc-depth: 3
+embed-resources: true
+---
+
+```{r}
+#| message: false
+#| include: false 
+
+library(tidyverse)
+library(kableExtra)
+```
+
+(Same set up as in the Quiz.) Suppose that the number of diapers that Prof. Ross changes in a typical day has a Poisson distribution with parameter $\theta$, independently from day to day.  In a sample of 14 days Prof. Ross changed a total of 38 diapers.
+
+1. Which one of the following prior distributions represents the strongest reasonable prior belief towards Prof. Ross changing more diapers?  Choose one, and explain your reasoning.
+
+- Gamma(2, 2)
+
+- Gamma(18, 6)
+
+- Gamma(100, 100)
+
+- Beta(100, 100)
+
+- Poisson(10)
+
+Gamma(18, 6) because this distribution is saying that on average he changes 3 diapers a day.
+
+2. Assume whatever prior distribution you choose in part 1. Explain in detail how, in principle, you could use simulation to approximate the posterior distribution of $\theta$ without first computing it.  This question is NOT asking you to find the posterior distribution using theory, or to write any code, or to do a grid approximation, or to do MCMC, or to use brms.  Rather, how could you run a naive simulation to approximate the posterior distribution given the prior distribution and the sample data?
+
+    1. Simulate values of theta from Gamma(18, 6)
+    2. Given theta, simulate the number of diapers changed from Pois(14theta)
+    3. Repeat
+    4. Keep only y = 38
+    5. Summarise theta
+
+3. Suppose you have computed (or approximated) the posterior distribution of $\theta$ Explain in detail how you could use simulation to approximate the posterior predictive distribution of Y for a single day.
+
+    1. Simulate theata from Gamma(18+36, 6+14)
+    2. Simulate y given theata from Pois(theta)
+    3. Repeat
+    4. Summarise y
+
+4. Suppose you compute both a 95% posterior credible interval and a 95% posterior prediction interval. Suppose one of these intervals is (2.1, 3.6) and the other is (0.0, 7.0).  For each of the intervals, write a clearly worded sentence reporting its conclusion in this context.
+
+Given our prior and data, there is a 95% posterior probability that the mean amount of diapers changed in a day is between 2.1 and 3.6.
+
+Between 0 and 7 diapers are changed on 95% of days.
+

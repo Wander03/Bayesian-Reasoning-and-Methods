@@ -36,7 +36,7 @@ library(janitor)
 
 You have two friends, Mabel and Dipper, who each makes a claim.
 
-Mabel says: “I’ve been learning to use the Force! (Like in Star Wars.) If you roll a fair four-sided die, I can use the Force to make it land on a 1Links to an external site.! I’m still learning, so I can’t do it every time, but it definitely works sometimes!”
+Mabel says: “I’ve been learning to use the Force! (Like in Star Wars.) If you roll a fair four-sided die, I can use the Force to make it land on a 1! I’m still learning, so I can’t do it every time, but it definitely works sometimes!”
 
 Dipper, a baseball player, says: “Ever since baseball season ended, I’ve been practicing really hard to improve my hitting. Last season I got hits in 25% of my at bats, but I’ve definitely improved since then.”
 
