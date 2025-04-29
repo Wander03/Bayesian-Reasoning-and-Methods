@@ -50,6 +50,10 @@ To investigate Dipper’s claim you have him take a series of at bats. Let $\the
 
 1. Use the results of the 100 trials to conduct a null hypothesis test for Mabel and compute the p-value.
 
+```{r}
+pbinom()
+```
+
 2. Repeat the previous part for Dipper.
 
 3. Based on the results of the hypothesis tests, whose claim - Mabel’s or Dipper’s - is more convincing? Or are you equally convinced? Why?
