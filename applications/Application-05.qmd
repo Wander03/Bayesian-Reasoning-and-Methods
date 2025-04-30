@@ -51,14 +51,20 @@ To investigate Dipper’s claim you have him take a series of at bats. Let $\the
 1. Use the results of the 100 trials to conduct a null hypothesis test for Mabel and compute the p-value.
 
 ```{r}
-pbinom()
+1 - pbinom(32, 100, 1/4)
 ```
 
 2. Repeat the previous part for Dipper.
 
+```{r}
+1 - pbinom(32, 100, 1/4)
+```
+
 3. Based on the results of the hypothesis tests, whose claim - Mabel’s or Dipper’s - is more convincing? Or are you equally convinced? Why?
 
-4. Now consider a Bayesian analysis for Mabel. Which one of the following prior distributions for represents the most prior skepticism about Mabel’s claim? Choose one and explain your reasoning.
+Based on ONLY the results of the test, they are both equally convincing!
+
+4. Now consider a Bayesian analysis for Mabel. Which one of the following prior distributions for $\theta_M$ represents the most prior skepticism about Mabel’s claim? Choose one and explain your reasoning.
 
 -   Beta(0, 0)
 -   Beta(0.25, 0)
@@ -71,13 +77,58 @@ pbinom()
 -   Beta(25, 100)
 -   Beta(75, 25)
 
+The Beta(25, 100) represents the most realistic prior skepticism. Although Beta(0, .25) is more skeptical, it is unrealistic. Meanwhile Beta(1, 4) has the same mean, but is less skeptical (has a larger spread/SD) than Beta(25, 100).
+
 5. Using the prior from the previous part and the results of the 100 trials, compute the posterior distribution of $\theta_M$, and find 50%, 80%, and 98% posterior credible intervals.
+
+```{r}
+alpha_prior <- 25
+beta_prior <- 100
+
+y <- 33
+n <- 100
+
+alpha_post <- alpha_prior + y
+beta_post <- beta_prior + n - y
+
+ci_50 <- qbeta(c(0.25, 0.75), alpha_post, beta_post)
+ci_80 <- qbeta(c(0.10, 0.90), alpha_post, beta_post)
+ci_98 <- qbeta(c(0.01, 0.99), alpha_post, beta_post)
+
+cat("50% Credible Interval:", ci_50, "\n")
+cat("80% Credible Interval:", ci_80, "\n")
+cat("98% Credible Interval:", ci_98, "\n")
+```
 
 6. Now consider a Bayesian analysis for Dipper. Choose a Beta prior distribution for $\theta_D$ based on your initial assessment of Dipper’s claim before collecting data. The Beta distribution does not need to come from the list above. Explain your reasoning.
 
+Since I am less skeptical about Dipper, I will take the Beta(1, 4) with the larger SD. I am still centering on .25 since I do not think that he has gotten substantially better or worse.
+
 7. Using the prior from the previous part and the results of the 100 at bats, compute the posterior distribution of $\theta_D$, and find 50%, 80%, and 98% posterior credible intervals.
+
+```{r}
+alpha_prior <- 1
+beta_prior <- 4
+
+y <- 33
+n <- 100
+
+alpha_post <- alpha_prior + y
+beta_post <- beta_prior + n - y
+
+ci_50 <- qbeta(c(0.25, 0.75), alpha_post, beta_post)
+ci_80 <- qbeta(c(0.10, 0.90), alpha_post, beta_post)
+ci_98 <- qbeta(c(0.01, 0.99), alpha_post, beta_post)
+
+cat("50% Credible Interval:", ci_50, "\n")
+cat("80% Credible Interval:", ci_80, "\n")
+cat("98% Credible Interval:", ci_98, "\n")
+```
 
 8. Based on the results of the Bayesian posterior analyses, whose claim - Mabel’s or Dipper’s - is more convincing? Or are you equally convinced? Why?
 
+Dippers is more convincing because the credibility intervals encompass higher values with a larger posterior mean. 
+
 9. In this situation, which analysis do you prefer: the frequentist analysis or the Bayesian analysis? Why? There is no right or wrong answer to this question, but you should state a clear preference and explain why it is more appealing to you.
 
+I prefer the Bayesian analysis because it takes more information into account than the frequentist analysis.
