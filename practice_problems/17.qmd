@@ -1,0 +1,62 @@
+---
+title: "PP 17"
+author: "Andrew Kerr"
+format:
+  html:
+    number_sections: yes
+    code-fold: true
+    toc: true
+    toc-title: "Outline"
+    toc-depth: 3
+embed-resources: true
+---
+
+Assume the amount of sleep (hours) that a randomly selected Cal Poly student gets on a typical week night follows a Normal distribution with mean $\mu$ hours and standard deviation $\sigma$ hours.
+
+Assume that
+
+- the prior distribution of $\mu$ is Normal with mean 8 and standard deviation 0.5.
+
+- the prior distribution of $\simga$ is Gamma with shape parameter 16 and rate parameter 13.
+
+- $\mu$ and $\sigma$ are independent under the prior distribution
+
+In a sample of 25 Cal Poly students, the sample mean amount of sleep is 7.1 hours and the sample standard deviation is 1.5 hours. It can be shown that for a random sample from a Normal distribution, it is enough to know the sample mean and sample SD in order to evaluate the likelihood.
+
+Given this sample data, it can be shown that
+
+- the posterior distribution of $\mu$ is approximately Normal with mean 7.32 and standard deviation 0.26.
+
+- the posterior distribution of $\sigma$ is approximately Normal with mean 1.46 and standard deviation 0.18
+
+- The joint posterior distribution of $\mu$ and $\sigma$ is approximately Bivariate Normal with correlation 0.16
+
+1. There are a lot of standard deviations in this problem. For each of the following, write a clearly worded sentence interpreting the value in this hours of sleep context. Don’t just say it measures “variability or uncertainty”. Be sure to identify variability or uncertainty of what? (You don’t have to compute anything.)
+
+a. $\sigma$
+
+b. prior standard deviation of 0.5 hours for $\mu$ 
+
+c. SD of the Gamma prior distribution
+
+d. $\frac{\sigma}{\sqrt{n}}$
+
+e. the posterior standard deviation for $\mu$
+
+f. the posterior standard deviation for $\sigma$
+
+2. Describe in full detail how you could use simulation to approximate the prior predictive distribution.
+
+3. Describe in full detail how, in principle, you could use simulation to approximate the posterior distribution. This is NOT asking you how to do a grid approximation. It’s also NOT asking you to write brms code or do MCMC. Rather, explain the naive simulation process for finding the posterior distribution as a conditional distribution.
+
+4. Compute and interpret in context a 98% posterior credible interval for $\mu$.
+
+5. Compute and interpret in context a 98% posterior credible interval for $\sigma$.
+
+6. Is the probability that both of the above intervals contain their respective parameter equal to $0.98^2$? Explain without doing any calculations.
+
+7. Describe in detail how you would use simulation to find the posterior predictive distribution, and a 95% posterior prediction interval.
+
+8. A 95% posterior prediction interval is [4.42, 10.32]. Write a sentence interpreting this interval in context.
+
+9. One parameter that is sometimes of interest is the coefficient of variation, defined to be $\sigma / \mu$. Describe in detail how you would use simulation to find the posterior distribution of $\sigma / \mu$, and a 98% posterior credible interval.

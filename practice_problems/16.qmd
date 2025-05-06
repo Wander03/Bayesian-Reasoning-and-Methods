@@ -1,0 +1,35 @@
+---
+title: "PP 16"
+author: "Andrew Kerr"
+format:
+  html:
+    number_sections: yes
+    code-fold: true
+    toc: true
+    toc-title: "Outline"
+    toc-depth: 3
+embed-resources: true
+---
+
+Heights (inches) of softball players follow a Normal distribution with mean $\theta$ and standard deviation 5.0. Assume a Normal(67.0, 2.0) prior distribution. In a random sample of 10 softball players the sample mean height is 64.0.
+
+The endpoints of each of the 95% posterior credible interval and the 95% posterior prediction interval are of the form mean±2×SD
+
+Choices for mean: 64.0, 64.1, 65.1, 66.8, 67.0, 67.2
+
+Choices for SD: 0.2, 1.2, 2.0,, 3.0, 5.0, 5.2
+
+1. For the posterior credible interval: identify from the lists above the most appropriate values of mean and SD and explain your choices without doing any calculations.
+
+2. For the posterior prediction interval: identify from the lists above the most appropriate values of mean and SD and explain your choices without doing any calculations.
+
+3. Identify the posterior distribution of $\theta$, including computing the values of any relevant parameters. Verify that the computations match your choices above.
+
+4. Write a clearly worded sentence interpreting the posterior credible interval in context.
+
+5. Use simulation to approximate the posterior predictive distribution; approximate its mean, SD, and describe its shape. You already know the posterior distribution, so you can simulate $\theta$ directly from its posterior distribution.
+
+6. It can be shown that in this situation that the variance of the posterior predictive distribution is the sum of \(\sigma^2\) and the posterior variance. Compute that value and compare to the simulated value from the previous part.
+
+7. Write a clearly worded sentence interpreting the posterior prediction interval in context.
+
