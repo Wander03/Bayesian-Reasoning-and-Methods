@@ -6,6 +6,7 @@ output:
   html_document:
     number_sections: yes
   pdf_document: default
+embed-resources: true
 ---
 
 # Set up
@@ -13,7 +14,7 @@ output:
 ```{r}
 library(knitr)
 
-knitr::opts_chunk$set(
+knitr::opts_chunk$set( 
   echo = TRUE,
   warning = FALSE,
   message = FALSE
@@ -200,13 +201,34 @@ For what values of $\theta$ is the posterior probability greater than the prior 
 Why?
 
 ```{r}
-# Type your code here.
+theta = seq(0.25, 1.25, 0.25)
+
+# prior
+prior = bayes_table$posterior
+prior = prior / sum(prior)
+
+# data
+n = 1 # sample size
+y = 1.6 # sample mean 
+
+# likelihood, using Exponential
+likelihood = dexp(y, theta) # function of theta
+
+# posterior
+product = likelihood * prior
+posterior = product / sum(product)
+
+# bayes table
+bayes_table = data.frame(theta,
+                         prior,
+                         likelihood,
+                         product,
+                         posterior)
+
+kable(bayes_table, digits = 4, align = 'r')
 ```
 
-
-**TYPE YOUR RESPONSE HERE.**
-
-
+The posterior is greater than the prior for theta = .5, .75, and 1. This is because we observed a rate of 1 / 1.6 = 0.625, which is close to these values of theta.
 
 Now consider the original prior again.
 Suppose that instead of observing the two individual values, we only observe that there is a total of wait time of 4.8 hours for 2 earthquakes.
@@ -216,16 +238,34 @@ How does the likelihood column compare to the one from the previous part?
 How does posterior compare to the previous part?
 
 ```{r}
-# Type your code here.
+theta = seq(0.25, 1.25, 0.25)
+
+# prior
+prior = c(0.04, 0.16, 0.25, 0.29, 0.26)
+prior = prior / sum(prior)
+
+# data
+n = 2 # sample size
+y = 4.8 # sample mean 
+
+# likelihood, using Exponential
+likelihood = dgamma(y, n, theta) # function of theta
+
+# posterior
+product = likelihood * prior
+posterior = product / sum(product)
+
+# bayes table
+bayes_table = data.frame(theta,
+                         prior,
+                         likelihood,
+                         product,
+                         posterior)
+
+kable(bayes_table, digits = 4, align = 'r')
 ```
 
-
-**TYPE YOUR RESPONSE HERE.**
-
-
-
-
-
+The likelihood is now a Gamma distribution with a shape parameter of 2. The likelihoods are different, but have the same/similar "strengths" for each theta. The posterior is the same!
 
 # Grid approximation
 
@@ -293,7 +333,7 @@ There was a total waiting time of 63.09 hours for the 100 earthquakes.
 
 ```{r, echo = TRUE}
 
-data = read.csv("quakes100.csv")
+data = read.csv(here::here("data", "quakes100.csv"))
 
 y = (1 / 60) * data$Waiting.time..minutes.
 
@@ -311,15 +351,33 @@ Plot the prior, (scaled) likelihood, and posterior.
 How does posterior compare to the prior?
 
 ```{r}
-# Type your code here.
+theta = seq(0, 5, 0.001)
+# prior
+
+prior = dgamma(theta, shape = 4, rate = 3)
+prior = prior / sum(prior)
+
+# data
+n <- length(data)
+
+# likelihood
+likelihood = dgamma(sum(y), n, theta)
+
+# posterior
+product = likelihood * prior
+posterior = product / sum(product)
+
+ylim = c(0, max(c(prior, posterior, likelihood / sum(likelihood))))
+xlim = range(theta)
+plot(theta, prior, type='l', xlim=xlim, ylim=ylim, col="orange", xlab='theta', ylab='', yaxt='n')
+par(new=T) 
+plot(theta, likelihood/sum(likelihood), type='l', xlim=xlim, ylim=ylim, col="skyblue", xlab='', ylab='', yaxt='n')
+par(new=T)
+plot(theta, posterior, type='l', xlim=xlim, ylim=ylim, col="seagreen", xlab='', ylab='', yaxt='n')
+legend("topright", c("prior", "scaled likelihood", "posterior"), lty=1, col=c("orange", "skyblue", "seagreen"))
 ```
 
-
-**TYPE YOUR RESPONSE HERE.**
-
-
-
-
+The posterior has the same shape as the likelihood, with a smaller peak and larger spread thanks to the prior.
 
 # Continuous prior - deriving the posterior
 
@@ -429,8 +487,6 @@ abline(v = qgamma(c(0.01, 0.99), alpha + n, lambda + n * y),
        col = "seagreen", lty = 2)
 ```
 
-
-
 ## Exercises
 
 
@@ -441,13 +497,43 @@ Identify by the name the posterior distribution and the values of relevant param
 
 
 ```{r}
-# Type your code here.
+theta = seq(0, 5, 0.001) # the grid is just for plotting
+
+# prior
+alpha = 4
+lambda = 3
+prior = dgamma(theta, shape = alpha, rate = lambda)
+
+# likelihood
+n = 2 # sample size
+y = 3.2 + 1.6 # sample mean
+likelihood = dgamma(y, n, theta)
+
+# posterior
+posterior = dgamma(theta, alpha + n, lambda + n * y)
+
+# plot
+plot_continuous_posterior <- function(theta, prior, likelihood, posterior) {
+  
+  ymax = max(c(prior, posterior))
+  
+  scaled_likelihood = likelihood * ymax / max(likelihood)
+  
+  plot(theta, prior, type='l', col='skyblue', xlim= range(theta), ylim=c(0, ymax), ylab='', yaxt='n')
+  par(new=T)
+  plot(theta, scaled_likelihood, type='l', col='orange', xlim=range(theta), ylim=c(0, ymax), ylab='',  yaxt='n')
+  par(new=T)
+  plot(theta, posterior, type='l', col='seagreen', xlim=range(theta), ylim=c(0, ymax), ylab='', yaxt='n')
+  legend("topright", c("prior", "scaled likelihood", "posterior"), lty=1, col=c("skyblue",  "orange", "seagreen"))
+}
+
+plot_continuous_posterior(theta, prior, likelihood, posterior)
+
+abline(v = qgamma(c(0.01, 0.99), alpha + n, lambda + n * y),
+       col = "seagreen", lty = 2)
 ```
 
-
-**TYPE YOUR RESPONSE HERE.**
-
-
+Posterior ~ Gamma(6, 12.6)
 
 Consider the original prior again.
 Determine the likelihood of observing a total wait time until two earthquakes of 4.8 hours.
@@ -457,15 +543,44 @@ How does this compare to the previous part?
 
 
 ```{r}
-# Type your code here.
+theta = seq(0, 5, 0.001) # the grid is just for plotting
+
+# prior
+alpha = 4
+lambda = 3
+prior = dgamma(theta, shape = alpha, rate = lambda)
+
+# likelihood
+n = 1 # sample size
+y = 3.2 + 1.6 # sample mean
+likelihood = dgamma(y, n, theta)
+
+# posterior
+posterior = dgamma(theta, alpha + n, lambda + n * y)
+
+# plot
+plot_continuous_posterior <- function(theta, prior, likelihood, posterior) {
+  
+  ymax = max(c(prior, posterior))
+  
+  scaled_likelihood = likelihood * ymax / max(likelihood)
+  
+  plot(theta, prior, type='l', col='skyblue', xlim= range(theta), ylim=c(0, ymax), ylab='', yaxt='n')
+  par(new=T)
+  plot(theta, scaled_likelihood, type='l', col='orange', xlim=range(theta), ylim=c(0, ymax), ylab='',  yaxt='n')
+  par(new=T)
+  plot(theta, posterior, type='l', col='seagreen', xlim=range(theta), ylim=c(0, ymax), ylab='', yaxt='n')
+  legend("topright", c("prior", "scaled likelihood", "posterior"), lty=1, col=c("skyblue",  "orange", "seagreen"))
+}
+
+plot_continuous_posterior(theta, prior, likelihood, posterior)
+
+abline(v = qgamma(c(0.01, 0.99), alpha + n, lambda + n * y),
+       col = "seagreen", lty = 2)
 ```
 
-
-**TYPE YOUR RESPONSE HERE.**
-
-
-
-
+Posterior ~ Gamma(5, 7.8)
+The parameters of the Gamma function are both smaller, leading to a smaller spread and more left center.
 
 # Gamma-Exponential Model
 

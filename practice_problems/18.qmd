@@ -1,0 +1,22 @@
+---
+title: "PP 18"
+author: "Andrew Kerr"
+format:
+  html:
+    number_sections: yes
+    code-fold: true
+    toc: true
+    toc-title: "Outline"
+    toc-depth: 3
+embed-resources: true
+---
+
+$$
+\frac
+{\text{posterior probability that } \theta = 0 \text{ and } \delta = 1}
+{\text{posterior probability that } \theta = 1 \text{ and } \delta = 0.5} \\
+= \frac
+{0.6 \times 0.3 \times \frac{1}{1(1 + (\frac{0 - 0}{1})^2)} \times \frac{1}{1(1 + (\frac{0.7 - 0}{1})^2)}}
+{0.2 \times 0.5 \times \frac{1}{0.5(1 + (\frac{0 - 1}{0.5})^2)} \times \frac{1}{0.5(1 + (\frac{0.7 - 1}{0.5})^2)}} \\
+$$
+
