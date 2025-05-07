@@ -21,15 +21,74 @@ Choices for SD: 0.2, 1.2, 2.0,, 3.0, 5.0, 5.2
 
 1. For the posterior credible interval: identify from the lists above the most appropriate values of mean and SD and explain your choices without doing any calculations.
 
+mean: 65.1 since it is between the prior and sample mean
+sd: 1.2 since we will always decrease the SD with more data
+
 2. For the posterior prediction interval: identify from the lists above the most appropriate values of mean and SD and explain your choices without doing any calculations.
+
+mean: 65.1 for the same reason as above
+sd: 5.2 since we know that the SD of heights is 5.0, and the prediction interval is larger
 
 3. Identify the posterior distribution of $\theta$, including computing the values of any relevant parameters. Verify that the computations match your choices above.
 
+```{r}
+# Given values
+mu_0 <- 67.0    # Prior mean
+tau_0 <- 2.0    # Prior SD
+prec_0 <- 1 / tau_0^2 # Prior precision
+x_bar <- 64.0   # Sample mean
+n <- 10         # Sample size
+sigma <- 5.0    # Known SD of data
+prec <- n / sigma^2 # Sample precision
+
+# Posterior precision
+prec_n <- prec_0 + prec
+
+# Posterior mean
+mu_n <- mu_0 * (prec_0 / (prec_0 + prec)) + x_bar * (prec / (prec_0 + prec))
+
+# Posterior SD
+tau_n <- sqrt(1 / prec_n)
+
+cat("Posterior mean (μ_n):", mu_n, "\n")
+cat("Posterior SD (τ_n):", tau_n, "\n")
+```
+
 4. Write a clearly worded sentence interpreting the posterior credible interval in context.
+
+```{r}
+c(mu_n - 1.96 * tau_n, mu_n + 1.96 * tau_n)
+```
+
+95% of the population of softball player heights is between 62.7 and 67.6 inches.
 
 5. Use simulation to approximate the posterior predictive distribution; approximate its mean, SD, and describe its shape. You already know the posterior distribution, so you can simulate $\theta$ directly from its posterior distribution.
 
+```{r}
+set.seed(123)
+sim <- rnorm(10000, mu_n, tau_n)
+
+hist(sim)
+
+cat("Posterior predictive mean:", mean(sim), "\n")
+cat("Posterior predictive SD:", sd(sim), "\n")
+```
+
+Its normal!
+
 6. It can be shown that in this situation that the variance of the posterior predictive distribution is the sum of \(\sigma^2\) and the posterior variance. Compute that value and compare to the simulated value from the previous part.
+
+```{r}
+sigma^2 + tau_n
+var(sim)
+```
+
+It doenst?
 
 7. Write a clearly worded sentence interpreting the posterior prediction interval in context.
 
+```{r}
+c(mean(sim) - 1.96 * sd(sim), mean(sim) + 1.96 * sd(sim))
+```
+
+95% of a randomly selected softball players height will fall between 62.7 and 67.6 inches.

@@ -33,30 +33,68 @@ Given this sample data, it can be shown that
 
 1. There are a lot of standard deviations in this problem. For each of the following, write a clearly worded sentence interpreting the value in this hours of sleep context. Don’t just say it measures “variability or uncertainty”. Be sure to identify variability or uncertainty of what? (You don’t have to compute anything.)
 
-a. $\sigma$
+a. $\sigma$: variation in hours of sleep between students (population)
 
-b. prior standard deviation of 0.5 hours for $\mu$ 
+b. prior standard deviation of 0.5 hours for $\mu$: variation in population average hours of sleep of all students
 
-c. SD of the Gamma prior distribution
+c. SD of the Gamma prior distribution: variation in the variation of hours of sleep
 
-d. $\frac{\sigma}{\sqrt{n}}$
+d. $\frac{\sigma}{\sqrt{n}}$: variation in hours of sleep of data (sample)
 
-e. the posterior standard deviation for $\mu$
+e. the posterior standard deviation for $\mu$: variation in posterior average hours of sleep of all students
 
-f. the posterior standard deviation for $\sigma$
+f. the posterior standard deviation for $\sigma$: variation in the posterior variation of hours of sleep
 
 2. Describe in full detail how you could use simulation to approximate the prior predictive distribution.
 
+- Sim mu ~ N(8, .5)
+- Sim theta ~ Gamma(16, 13)
+- Given mu and theta, sim y ~ N(mu, theta)
+- Repeat and summarise y
+
 3. Describe in full detail how, in principle, you could use simulation to approximate the posterior distribution. This is NOT asking you how to do a grid approximation. It’s also NOT asking you to write brms code or do MCMC. Rather, explain the naive simulation process for finding the posterior distribution as a conditional distribution.
+
+- Sim mu ~ N(8, .5)
+- Sim theta ~ Gamma(16, 13)
+- Given mu and theta, sim 25 values of y ~ N(mu, theta)
+- Compute y-bar and SE
+- Repeat and keep only y-bar = 7.1 and SE = 1.5 samples
+- summarise the pairs of mu and theta
 
 4. Compute and interpret in context a 98% posterior credible interval for $\mu$.
 
+```{r}
+c(7.32 - -qnorm((1-.98)/2) * .26, 7.32 - qnorm((1-.98)/2) * .26)
+```
+
+Based on the observed data and our prior, there is posterior credibility of 98% that population mean hours of sleep for CP students is between 6.71 and 7.93 hours.
+
 5. Compute and interpret in context a 98% posterior credible interval for $\sigma$.
+
+```{r}
+c(1.46 - -qnorm((1-.98)/2) * .18, 1.46 - qnorm((1-.98)/2) * .18)
+```
+
+Based on the observed data and our prior, there is posterior credibility of 98% that population SD of hours of sleep for CP students is between 1.04 and 1.88 hours.
 
 6. Is the probability that both of the above intervals contain their respective parameter equal to $0.98^2$? Explain without doing any calculations.
 
+No because the values are not independent, so we can not multiply the probabilities together.
+
 7. Describe in detail how you would use simulation to find the posterior predictive distribution, and a 95% posterior prediction interval.
+
+- sim pairs of (mu, theta)
+- Given the pairs, sim y
+- Repeat and summarise y
+- The interval will be the 2.5th and 87.5th percentiles
 
 8. A 95% posterior prediction interval is [4.42, 10.32]. Write a sentence interpreting this interval in context.
 
+There is a 95% posterior predictive probability that the sleep hours for a randomly selected CP student are between 4.42 and 10.32 hours.
+
 9. One parameter that is sometimes of interest is the coefficient of variation, defined to be $\sigma / \mu$. Describe in detail how you would use simulation to find the posterior distribution of $\sigma / \mu$, and a 98% posterior credible interval.
+
+- Sim pairs of (mu, theta)
+- Compute sigma / mu
+- Repeat and summarise the values
+- The interval will be the 1st and 99th percentiles
