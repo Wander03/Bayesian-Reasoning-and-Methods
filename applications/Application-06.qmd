@@ -7,6 +7,7 @@ output:
     number_sections: yes
   pdf_document: default
 embed-resources: true
+code-fold: true
 ---
 
 # Set up
@@ -505,12 +506,13 @@ lambda = 3
 prior = dgamma(theta, shape = alpha, rate = lambda)
 
 # likelihood
-n = 2 # sample size
-y = 3.2 + 1.6 # sample mean
-likelihood = dgamma(y, n, theta)
+n = 2
+y1 = 3.2
+y2 = 1.6
+likelihood = dexp(y1, theta) * dexp(y2, theta)
 
 # posterior
-posterior = dgamma(theta, alpha + n, lambda + n * y)
+posterior = dgamma(theta, alpha + n, lambda + y1 + y2)
 
 # plot
 plot_continuous_posterior <- function(theta, prior, likelihood, posterior) {
@@ -533,7 +535,7 @@ abline(v = qgamma(c(0.01, 0.99), alpha + n, lambda + n * y),
        col = "seagreen", lty = 2)
 ```
 
-Posterior ~ Gamma(6, 12.6)
+Posterior ~ Gamma(6, 7.8)
 
 Consider the original prior again.
 Determine the likelihood of observing a total wait time until two earthquakes of 4.8 hours.
@@ -551,12 +553,12 @@ lambda = 3
 prior = dgamma(theta, shape = alpha, rate = lambda)
 
 # likelihood
-n = 1 # sample size
-y = 3.2 + 1.6 # sample mean
+n = 2
+y = 3.2 + 1.6
 likelihood = dgamma(y, n, theta)
 
 # posterior
-posterior = dgamma(theta, alpha + n, lambda + n * y)
+posterior = dgamma(theta, alpha + n, lambda + y)
 
 # plot
 plot_continuous_posterior <- function(theta, prior, likelihood, posterior) {
@@ -579,8 +581,8 @@ abline(v = qgamma(c(0.01, 0.99), alpha + n, lambda + n * y),
        col = "seagreen", lty = 2)
 ```
 
-Posterior ~ Gamma(5, 7.8)
-The parameters of the Gamma function are both smaller, leading to a smaller spread and more left center.
+Posterior ~ Gamma(6, 7.8)
+The parameters of the Gamma function are the same!
 
 # Gamma-Exponential Model
 
@@ -640,67 +642,102 @@ If the prior mean is $\mu$ and the prior SD is $\sigma$, then
 
 
 
-Consider the data on a sample of 100 earthquakes in the total wait time ws 63.09 hours.
+Consider the data on a sample of 100 earthquakes in the total wait time was 63.09 hours.
 Use the theory of the Gamma-Exponential model to find the posterior distribution.
 
 
 ```{r}
-# Type your code here.
+alpha_prior <- 4
+lambda_prior <- 3
+
+n <- 100
+y_tot <- 63.09
+
+y_bar <- y_tot / n
+
+alpha_posterior <- alpha_prior + n
+lambda_posterior <- lambda_prior + y_tot
+
+cat("Posterior Alpha:", alpha_posterior, "\n")
+cat("Posterior Lambda:", lambda_posterior)
 ```
-
-
-**TYPE YOUR RESPONSE HERE.**
-
-
-
-
 
 Plot prior, likelihood, and posterior.
 Compare to the grid approximation.
 
 ```{r}
-# Type your code here.
+theta = seq(0, 5, 0.001) # the grid for plotting
+
+# Prior distribution parameters
+alpha_prior = 4
+lambda_prior = 3
+prior = dgamma(theta, shape = alpha_prior, rate = lambda_prior)
+
+# Likelihood (based on the sum of Exponentials, proportional to Gamma)
+n = 100
+total_y = 63.09
+likelihood = dgamma(total_y, shape = n, rate = theta) # Likelihood as a function of theta
+
+# Posterior distribution parameters (from conjugate prior theory)
+alpha_posterior = alpha_prior + n
+lambda_posterior = lambda_prior + total_y
+posterior = dgamma(theta, shape = alpha_posterior, rate = lambda_posterior)
+
+# Scale likelihood for plotting
+ymax = max(c(prior, posterior))
+scaled_likelihood = likelihood * ymax / max(likelihood)
+
+# Plot
+plot(theta, prior, type='l', col='skyblue', lwd=2,
+     xlim=range(theta), ylim=c(0, ymax),
+     xlab='Rate (θ)', ylab='Density',
+     main='Prior, (Scaled) Likelihood, and Posterior Distributions')
+lines(theta, scaled_likelihood, col='orange', lwd=2)
+lines(theta, posterior, col='seagreen', lwd=2)
+legend("topright", legend=c("Prior", "Scaled Likelihood", "Posterior"),
+       col=c("skyblue", "orange", "seagreen"), lty=1, lwd=2)
 ```
-
-
-
-**TYPE YOUR RESPONSE HERE.**
-
-
-
-
-
 
 
 Find the posterior mean, posterior SD, and a posterior 98% credible interval for $\theta$.
 
 ```{r}
-# Type your code here.
+# Calculate posterior mean
+posterior_mean <- alpha_posterior / lambda_posterior
+cat("Posterior Mean:", posterior_mean, "\n")
+
+# Calculate posterior standard deviation
+posterior_sd <- sqrt(alpha_posterior) / lambda_posterior
+cat("Posterior Standard Deviation:", posterior_sd, "\n")
+
+qgamma(c(0.01, 0.99), shape = 104, rate = 66.09)
 ```
-
-
-**TYPE YOUR RESPONSE HERE.**
-
 
 Interpret the credible interval from the previous part in context.
 
-
-
-**TYPE YOUR RESPONSE HERE.**
-
+98% of the true rate of earthquakes in Southern California, based on this data and our prior belief, lies between 1.281 and 1.883 earthquakes per hour.
 
 Express the posterior mean of $\theta$ based on the data as a weighted average of the prior mean and the sample mean.
 
-
 ```{r}
-# Type your code here.
+alpha_prior = 4
+lambda_prior = 3
+n <- 100
+y_tot <- 63.09
+
+y_bar <- y_tot / n
+
+prior_mean <- alpha_prior / lambda_prior
+sample_rate <- 1 / y_bar
+
+weight_prior = lambda_prior / (lambda_prior + total_y)
+weight_data = total_y / (lambda_prior + total_y)
+
+posterior_mean_weighted = (weight_prior * prior_mean) + (weight_data * sample_rate)
+
+cat("Posterior Mean =", weight_prior, "x", prior_mean, "+", weight_data, "x",sample_rate,  "\n")
+cat("Posterior Mean (Weighted Average):", posterior_mean_weighted, "\n")
 ```
-
-
-**TYPE YOUR RESPONSE HERE.**
-
-
-
 
 # Investigating other parameters (Exercises)
 
@@ -712,11 +749,34 @@ How could you use simulation to find the posterior distribution of the *mean* ti
 Conduct the simulation and find and interpret a central 98% posterior credible interval for the *mean* time between earthquakes.
 
 ```{r}
-# Type your code here.
+# Posterior parameters for theta
+alpha_posterior = 104
+lambda_posterior = 66.09
+
+n_sims = 10000
+
+# Simulate values of theta from the posterior distribution
+posterior_theta_samples = rgamma(n_sims, shape = alpha_posterior, rate = lambda_posterior)
+
+# Calculate the corresponding mean waiting times (mu = 1/theta)
+posterior_mean_time_samples = 1 / posterior_theta_samples
+
+# Visualize the posterior distribution of the mean time
+hist(posterior_mean_time_samples, breaks = 100, freq = FALSE,
+     xlab = "Mean Time Between Earthquakes (hours)",
+     ylab = "Posterior Density",
+     main = "Posterior Distribution of Mean Time Between Earthquakes")
+
+# Find the central 98% posterior credible interval
+credible_interval_mean_time <- quantile(posterior_mean_time_samples, c(0.01, 0.99))
+cat("Central 98% Posterior Credible Interval for Mean Time (hours):\n", credible_interval_mean_time, "\n")
 ```
 
+1. Using the posterior alpha and beta, sim y from Gamma()
+2. Calc mean with 1 / y
+3. Repeat
 
-**TYPE YOUR RESPONSE HERE.**
+Based on our prior beliefs and the observed data, 98% of the time the true mean time between earthquakes is between  0.51 and 0.81 hours.
 
 Because the waiting times are skewed to the right, we might be more interested in the *median* time between earthquakes.
 How could you use simulation to find the posterior distribution of the *median* time between earthquakes.
@@ -725,31 +785,68 @@ Conduct the simulation and find and interpret a central 98% posterior credible i
 
 
 ```{r}
-# Type your code here.
+# Posterior parameters for theta
+alpha_posterior = 104
+lambda_posterior = 66.09
+
+n_sims = 10000
+
+# Simulate values of theta from the posterior distribution
+posterior_theta_samples = rgamma(n_sims, shape = alpha_posterior, rate = lambda_posterior)
+
+# Calculate the corresponding median waiting times
+posterior_median_time_samples = log(2) / posterior_theta_samples
+
+# Visualize the posterior distribution of the median time
+hist(posterior_median_time_samples, breaks = 100, freq = FALSE,
+     xlab = "Median Time Between Earthquakes (hours)",
+     ylab = "Posterior Density",
+     main = "Posterior Distribution of Median Time Between Earthquakes")
+
+# Find the central 98% posterior credible interval
+credible_interval_median_time <- quantile(posterior_median_time_samples, c(0.01, 0.99))
+cat("Central 98% Posterior Credible Interval for Median Time (hours):\n", credible_interval_median_time, "\n")
 ```
 
+1. Same as before, but calc the median with ln(2) / rate
 
-**TYPE YOUR RESPONSE HERE.**
-
+Based on our prior beliefs and the observed data, 98% of the time the true median time between earthquakes is between 0.36 and 0.56 hours.
 
 # Posterior predictive distribution (Exercises)
 
 Describe in words how you could use simulation (not JAGS) to approximate the posterior predictive distribution of the waiting time until the next earthquake.
 
-
-**TYPE YOUR RESPONSE HERE.**
-
+1. Using posterior alpha and lambda, sim theta from Gamma()
+2. Sim y ~ Exp(theta) | theta
+3. Repeat and summarise y's
 
 Code and run the posterior predictive simulation, plot the results, and find a 95% posterior predictive interval with a lower bound of 0.
 
 ```{r}
-# Type your code here.
+# Posterior parameters for theta
+alpha_posterior = 104
+lambda_posterior = 66.09
+
+n_sims = 10000
+
+# Simulate values of theta from the posterior distribution
+posterior_theta_samples = rgamma(n_sims, shape = alpha_posterior, rate = lambda_posterior)
+
+# Simulate future waiting times for each sampled theta
+posterior_predictive_samples = rexp(n_sims, rate = posterior_theta_samples)
+
+# Visualize the posterior predictive distribution
+hist(posterior_predictive_samples, breaks = 100, freq = FALSE,
+     xlab = "Waiting Time Until Next Earthquake (hours)",
+     ylab = "Posterior Predictive Density",
+     main = "Posterior Predictive Distribution of Waiting Time")
+
+# Find a 95% posterior predictive interval with a lower bound of 0
+predictive_interval_lower_bound_0 <- quantile(posterior_predictive_samples, c(0, 0.95))
+cat("95% Posterior Predictive Interval (Lower Bound 0) for Waiting Time (hours):\n", predictive_interval_lower_bound_0, "\n")
 ```
 
 Write a clearly worded sentence interpreting the predictive interval from the previous part.
 
-
-**TYPE YOUR RESPONSE HERE.**
-
-
+Based on the data and our prior beliefs, 95% of the wait times until the next earthquake are less than  1.95 hours.
 
