@@ -1,0 +1,103 @@
+---
+title: "STAT 415 Application 7"
+author: "Andrew Kerr"
+date: ''
+output:
+  html_document:
+    number_sections: yes
+  pdf_document: default
+---
+
+
+
+
+# Introduction
+
+In this application you will perform a Bayesian analysis of sample data to estimate a population mean in a context of your choice.
+
+
+# Instructions
+
+This RMarkdown file provides a template for you to fill in.
+You are welcome to copy and paste code from handouts or my online notes.
+Be sure to include all code and relevant output in your submission.
+
+
+# Submission instructions
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document.
+When you are finished
+
+- Click **Knit** and check to make sure that you have no errors and everything runs properly.
+(Fix any problems and redo this step until it works.)
+- Make sure your type your name(s) at the top of the notebook where it says "Type your name(s) here".
+If you worked in a team, you will submit a single notebook with both names; make sure all names are included.
+- Submit your completed files in Canvas.
+
+# Tasks
+
+1. Find a context involving a single numerical variable.
+Ideally, the context should be interesting to you personally.
+You have some flexibility in your choice, but you will need to use one of the following models --- $t$ or Skew-Normal --- so choose your context and data accordingly.
+(You shouldn't just use Normal.
+You are welcome to investigate another family like LogNormal, but you should check with me first.)
+
+1. Clearly define in context the relevant parameters (e.g., "population mean arrival time at parties").
+Be sure to clarify how the variable is measured (e.g., "arrival time is measured as minutes after start time...")
+
+2. Use prior predictive tuning to determine your prior distribution of your parameters.
+You only need to report your final choice of prior (not all the steps of your tuning), but be sure to describe your process.
+Summarize --- with appropriate plots and summary statistics --- both the prior distribution of parameters and the prior predictive distribution.
+(It doesn't really matter what your prior is, but it should be your choice, reflecting any background knowledge of the context and the results of your posterior predictive tuning.
+In this part do *not* just let `brms` choose the prior.)
+
+
+3. Find some reliable sample data from a reputable source and cite the source for your sample (the organization that collected the data and a link to the study/article is fine).
+You will need the individual data points; summary statistics like the sample mean are *not* enough.
+A sample size in the few hundreds or maybe a thousand is ideal.
+
+    **Note:** you are NOT collecting your own data.
+    Instead, you're finding data from an available source.
+    One suggestion: find an example from a previous STAT class (e.g., STAT 301) that you found interesting, and do a Bayesian analysis.
+
+4. Investigate how the data was collected.
+Depending on your source, it might be hard to find information, but do try to look for the survey methodology.
+Is your sample reasonably representative of your population of interest?
+Is your variable measured reliably?
+
+
+5. Describe in words how in principle you could use simulation to approximate the posterior distribution.
+
+6. Use `brms` to approximate the posterior distribution.
+Summarize --- with appropriate plots and summary statistics --- the posterior distribution.
+
+7. Describe in words how in principle you could use simulation to approximate the posterior predictive distribution.
+
+8. Use simulation to approximate the posterior predictive distribution.
+Summarize --- with appropriate plots and summary statistics --- the posterior predictive distribution.
+
+
+9. Write a few clearly worded sentences reporting the main conclusions of your Bayesian analysis in context.
+Be sure to also consider the manner of data collection when stating your conclusions.
+(Is the sample reasonably representative of a population?
+Was the variable measured reliably?)
+
+
+10. Now refit in the model using `brms`, but letting `brms` choose the prior for all parameters.
+Compare the results to those from the model you fit previously.
+
+    - What prior does `brms` choose?
+    - How does the `brms` prior distribution compare to your prior distribution?
+    - How does the prior predictive distribution based on the `brms` prior distribution compare to your prior predictive distribution?
+    - How sensitive is the posterior distribution to choice of prior?
+    - How sensitive is the posterior predictive distribution to choice of prior?
+    - Are any conclusions substantially different between the two models?
+
+
+11. (Optional.) Perform a comparable frequentist analysis using whatever software (R, applets, etc) you want.
+Interpret your results in context.
+Compare the results of the frequentist and Bayesian analysis.
+Are the numerical results similar?
+How are the interpretations different?
+
+
