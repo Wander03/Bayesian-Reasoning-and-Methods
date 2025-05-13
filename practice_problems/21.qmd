@@ -11,14 +11,48 @@ format:
 embed-resources: true
 ---
 
-Assume home runs per game at Citizens Bank Park follow a Poisson distribution with parameter $\theta$. Assume a Gamma prior distribution with shape parameter 4 and rate parameter 2. In 2020, there were 97 home runs in 32 games.  We'll use a Metropolis algorithm to approximate the posterior distribution given the data via simulation.
+Assume home runs per game at Citizens Bank Park follow a Poisson distribution with parameter $\theta$. Assume a Gamma prior distribution with shape parameter 4 and rate parameter 2. In 2020, there were 97 home runs in 32 games. We'll use a Metropolis algorithm to approximate the posterior distribution given the data via simulation.
 
 1. Remember, MCMC doesn't require us to find the posterior distribution.  But, for purposes of illustration, find the posterior distribution and plot it.  Describe in general terms what you want your simulation to do. ("Generally I want most values to be around [blank], but I also want to visit values around [blank] occasionally" etc)
 
+posterior: Gamma(4+97, 2+32)
+
+```{r}
+theta <- seq(0, 1, length = 1000)
+
+plot(dgamma(theta, 4+97, 2+32), type="l")
+```
+
+
 2. Describe in detail a Metropolis algorithm for simulating values from the posterior distribution.  Remember, do NOT use the posterior distribution from the previous part.
+
+- Given the current state propose a new state from a N(current theta, .1)
+
+- Find the acceptance probability from pi(proposed) / pi(current)
+
+- Move if accepted, otherwise stay
 
 3. Suppose the current state is 2.5 and the proposed state is 2.6. Compute the acceptance probability. Explain why this makes sense based on your answer to part 1.
 
+```{r}
+pi_theta = function(theta){
+  if (theta > 0) dgamma(theta, 4, 2) * dpois(97, 32 * theta) else 0
+}
+```
+
+```{r}
+pi_theta(2.6) / pi_theta(2.5)
+```
+
 4. Suppose the current state is 2.5 and the proposed state is 2.4. Compute the acceptance probability. Explain why this makes sense based on your answer to part 1.
 
+```{r}
+pi_theta(2.4) / pi_theta(2.5)
+```
+
 5. Suppose the current state is 2.5 and the proposed state is 2.0. Compute the acceptance probability. Explain why this makes sense based on your answer to part 1.
+
+```{r}
+pi_theta(2.0) / pi_theta(2.5)
+```
+
