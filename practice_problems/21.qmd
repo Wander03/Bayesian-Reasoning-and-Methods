@@ -1,0 +1,24 @@
+---
+title: "PP 21"
+author: "Andrew Kerr"
+format:
+  html:
+    number_sections: yes
+    code-fold: true
+    toc: true
+    toc-title: "Outline"
+    toc-depth: 3
+embed-resources: true
+---
+
+Assume home runs per game at Citizens Bank Park follow a Poisson distribution with parameter $\theta$. Assume a Gamma prior distribution with shape parameter 4 and rate parameter 2. In 2020, there were 97 home runs in 32 games.  We'll use a Metropolis algorithm to approximate the posterior distribution given the data via simulation.
+
+1. Remember, MCMC doesn't require us to find the posterior distribution.  But, for purposes of illustration, find the posterior distribution and plot it.  Describe in general terms what you want your simulation to do. ("Generally I want most values to be around [blank], but I also want to visit values around [blank] occasionally" etc)
+
+2. Describe in detail a Metropolis algorithm for simulating values from the posterior distribution.  Remember, do NOT use the posterior distribution from the previous part.
+
+3. Suppose the current state is 2.5 and the proposed state is 2.6. Compute the acceptance probability. Explain why this makes sense based on your answer to part 1.
+
+4. Suppose the current state is 2.5 and the proposed state is 2.4. Compute the acceptance probability. Explain why this makes sense based on your answer to part 1.
+
+5. Suppose the current state is 2.5 and the proposed state is 2.0. Compute the acceptance probability. Explain why this makes sense based on your answer to part 1.
