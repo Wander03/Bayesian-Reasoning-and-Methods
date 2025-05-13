@@ -1,0 +1,139 @@
+---
+title: "PP 20"
+author: "Andrew Kerr"
+format:
+  html:
+    number_sections: yes
+    code-fold: true
+    toc: true
+    toc-title: "Outline"
+    toc-depth: 3
+embed-resources: true
+---
+
+A famous study by Amos Tversky and Daniel KahnemanLinks to an external site. investigated the anchoring heuristicLinks to an external site., which (very roughly) is a human tendency to rely too heavily on the first piece of information offered (the “anchor”) when making decisions. I have replicated this study in several of my statistics classes as follows.
+
+Students were given a slip of paper which said: I chose (by computer) a random number between 0 and 100. The number selected and assigned to you is X (where X was a number, e.g., 65.)
+
+- Do you think the percentage of countries, among all those in the United Nations, that are in Africa is higher or lower than X?
+
+- Give your best estimate of the percentage of countries, among all those in the United Nations, that are in Africa.
+
+There were two versions of the survey; one in which X was 10, and one in which X was 65. The versions of the survey were distributed at random, with about half of the students receiving the version with 10, and the others receiving the version with 65. Results of this study are summarized below; the main variable of interest is the response to the “UN Africa question” as a percent.
+
+Is there evidence that people who see a larger number tend to respond with a larger number? That is, do the data provide evidence in favor of the anchoring heuristic? We’ll perform a Bayesian analysis to address this question.
+
+We’ll assume
+
+- Likelihood/model for the data:
+
+  - Responses (as a percent) for those who see X = 65 follow a Normal distribution with mean $\mu_1$ and known SD $\sigma$.
+
+  - Responses (as a percent) for those who see X = 10 follow a Normal distribution with mean $\mu_2$ and known SD $\sigma$.
+  
+  - Independence between and within samples
+  
+- Prior distribution of parameters
+
+  - $\mu_1$ and $\mu_2$ are independent
+  
+  - $\mu_1$ has a Normal prior distribution with mean 37 and SD 20
+  
+  - $\mu_2$ has a Normal prior distribution with mean 37 and SD 20
+
+A few notes:
+
+- 37 is the true answer to the “UN Africa” question. The 10 and 65 values were chosen to be equal distance from 37
+
+- A Normal likelihood might not be the best assumption given the sample data. We’re just using it for simplicity.
+
+- We’re assuming known SD just for simplicity.
+
+- Don’t worry that the marginal prior distributions give credibility to values outside [0, 100]. We’re assuming a Normal prior for simplicity, but another prior would be a better option here.
+
+1. We’re assuming prior independence of $\mu_1$ and $\mu_2$, but explain in context why you might NOT want to assume prior independence. (Regardless of your answer, assume prior independence for the remaining parts.)
+
+Our beliefs about one mean would affect our beliefs about the other.
+
+2. Find the posterior distribution of $\mu_1$ and $\mu_2$. (Hint: independence in the prior + independence in the data = independence in the posterior. Use the Normal-Normal model to find the marginal posterior distribution of each parameter separately.)
+
+```{r}
+prior_mu <- 37
+prior_sd <- 20
+
+
+data_mu_1 <- 16.31
+data_sd_1 <- 7.397
+n_1 <- 112
+prec_1 <- 1 / data_sd_1**2
+prec_data_1 <- n_1 / prior_sd**2
+
+data_mu_2 <- 30.26
+data_sd_2 <- 11.67
+n_2 <- 116
+prec_2 <- 1 / data_sd_2**2
+prec_data_2 <- n_2 / prior_sd**2
+
+post_prec_1 <- prec_1 + prec_data_1
+post_sd_1 <- 1 / sqrt(post_prec_1)
+post_mu_1 <- prior_mu * (prec_1 / (prec_1 + prec_data_1)) + data_mu_1 * (prec_data_1 / (prec_1 + prec_data_1))
+
+post_prec_2 <- prec_2 + prec_data_2
+post_sd_2 <- 1 / sqrt(post_prec_2)
+post_mu_2 <- prior_mu * (prec_2 / (prec_2 + prec_data_2)) + data_mu_2 * (prec_data_2 / (prec_2 + prec_data_2))
+
+cat("X=10 ~ N(", post_mu_1, ", ", post_sd_1, ")\n", sep="")
+cat("X=65 ~ N(", post_mu_2, ", ", post_sd_2, ")", sep="")
+```
+
+3. Find the joint posterior distribution of $\mu_1 - \mu_2$. (Hint: if $U, V$ are independent and Normal, what is the distribution of $U - V$? Its mean? Its SD?)
+
+```{r}
+mu_diff_mean <- post_mu_2 - post_mu_1
+mu_diff_sd <- sqrt(post_sd_1**2 + post_sd_2**2)
+
+cat("diff ~ N(", mu_diff_mean, ", ", mu_diff_sd, ")\n", sep="")
+```
+
+4. Find and interpret 50%, 80%, and 98% posterior credible intervals for $\mu_1 - \mu_2$.
+
+```{r}
+qnorm(c(0.01, 0.10, 0.25, 0.75, 0.90, 0.99), mu_diff_mean, mu_diff_sd)
+```
+
+There is a posterior probability of 50% that mean response to the UN Africa question is between 11.1 and 14.6 percentage points greater for those who see X = 65 than X = 10.
+
+There is a posterior probability of 80% that mean response to the UN Africa question is between 9.5 and 16.2 percentage points greater for those who see X = 65 than X = 10.
+
+There is a posterior probability of 98% that mean response to the UN Africa question is between 6.8 and 18.9 percentage points greater for those who see X = 65 than X = 10.
+
+5. Find and interpret the posterior probability that $\mu_1 > \mu_2$.
+
+```{r}
+1 - pnorm(0, mu_diff_mean, mu_diff_sd)
+```
+
+6. Find and interpret 50%, 80%, and 98% posterior credible intervals for the effect size $\mu_1 - \mu_2 / \sigma$. (Hint: remember we’re assuming $\sigma$ is constant.)
+
+```{r}
+qnorm(c(0.01, 0.10, 0.25, 0.75, 0.90, 0.99), mu_diff_mean, mu_diff_sd) / prior_sd
+```
+
+There is a posterior probability of 50% that mean response to the UN Africa question is between .56 and .73 standard deviations greater for those who see X = 65 than X = 10.
+
+There is a posterior probability of 80% that mean response to the UN Africa question is between .48 and .81 standard deviations greater for those who see X = 65 than X = 10.
+
+There is a posterior probability of 98% that mean response to the UN Africa question is between .34 and .94 standard deviations greater for those who see X = 65 than X = 10.
+
+7. Is there evidence that there is a difference in mean responses between the two anchors? Explain.
+
+Yes, see Q5.
+
+8. Is there evidence that there is a big difference in mean responses between the two anchors?
+Explain.
+
+Yes, we see large effect sizes.
+
+9. Is there evidence that the difference is because in mean responses is caused by the anchor? Explain.
+
+Yes because we had random assigment.
