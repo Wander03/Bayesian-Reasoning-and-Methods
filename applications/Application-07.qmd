@@ -6,10 +6,15 @@ output:
   html_document:
     number_sections: yes
   pdf_document: default
+embed-resources: true
 ---
 
-
-
+```{r}
+#| message: false
+library(tidyverse)
+library(janitor)
+library(brms)
+```
 
 # Introduction
 
@@ -36,14 +41,21 @@ If you worked in a team, you will submit a single notebook with both names; make
 
 # Tasks
 
-1. Find a context involving a single numerical variable.
+0. Find a context involving a single numerical variable.
 Ideally, the context should be interesting to you personally.
 You have some flexibility in your choice, but you will need to use one of the following models --- $t$ or Skew-Normal --- so choose your context and data accordingly.
 (You shouldn't just use Normal.
 You are welcome to investigate another family like LogNormal, but you should check with me first.)
 
+```{r}
+weight <- readxl::read_excel(here::here('data', 'AtkinsWeightWatchers.xls')) %>%
+  clean_names()
+```
+
 1. Clearly define in context the relevant parameters (e.g., "population mean arrival time at parties").
 Be sure to clarify how the variable is measured (e.g., "arrival time is measured as minutes after start time...")
+
+There are two diet plans, Atkins and Weight Watchers, however here I will look at the combination of the two. The parameter of interest is the individuals weight lost after 2 months of dieting. 
 
 2. Use prior predictive tuning to determine your prior distribution of your parameters.
 You only need to report your final choice of prior (not all the steps of your tuning), but be sure to describe your process.
@@ -51,6 +63,27 @@ Summarize --- with appropriate plots and summary statistics --- both the prior d
 (It doesn't really matter what your prior is, but it should be your choice, reflecting any background knowledge of the context and the results of your posterior predictive tuning.
 In this part do *not* just let `brms` choose the prior.)
 
+```{r}
+n_rep <- 10000
+
+mu_sim_prior <- rnorm(n_rep, 0, 1)
+sigma_sim_prior <- abs(rnorm(n_rep, 0, 0.3))
+alpha_sim_prior <- rnorm(n_rep, 2, 0.5)
+y_sim_prior = rskew_normal(n_rep, mu_sim_prior, sigma_sim_prior, alpha_sim_prior)
+
+ggplot(data.frame(y_sim_prior),
+       aes(x = y_sim_prior)) + 
+  geom_histogram(aes(y = after_stat(density)),
+                 col = 'cornflowerblue',
+                 fill = "white") +
+  geom_density(col = 'cornflowerblue',
+               linewidth = 1) +
+  theme_bw()
+
+quantile(y_sim_prior, c(0.025, 0.975))
+```
+
+- I tried different skewness values and sigma values until I got a distribution that was centered around 0, and went out to around 3.
 
 3. Find some reliable sample data from a reputable source and cite the source for your sample (the organization that collected the data and a link to the study/article is fine).
 You will need the individual data points; summary statistics like the sample mean are *not* enough.
@@ -60,28 +93,90 @@ A sample size in the few hundreds or maybe a thousand is ideal.
     Instead, you're finding data from an available source.
     One suggestion: find an example from a previous STAT class (e.g., STAT 301) that you found interesting, and do a Bayesian analysis.
 
+```{r}
+weight %>%
+  ggplot(aes(x = weightloss_2mos)) +
+    geom_histogram(bins = 15, fill = 'cornflowerblue') +
+    theme_bw()
+```
+
+A weight watchers study from Stat 301, no link to the study :( 
+
 4. Investigate how the data was collected.
 Depending on your source, it might be hard to find information, but do try to look for the survey methodology.
 Is your sample reasonably representative of your population of interest?
 Is your variable measured reliably?
 
+Since I am not sure, I will assume that this data was collected in the best way possible, using a good ol' random sampling that is a perfect representation of an adult population. 
 
 5. Describe in words how in principle you could use simulation to approximate the posterior distribution.
+
+- Sim mu, sigma, and alpha ~ prior
+
+- Given mu, sigma, and alpha, sim 80 y ~ $N_{skewed}$(mu, sigma, alpha)
+
+- Repeat above
+
+- Keep reps where the sample of 80 matches the observed sample of 80
+
+- Summarise the mu, sigma, and alpha tuples
 
 6. Use `brms` to approximate the posterior distribution.
 Summarize --- with appropriate plots and summary statistics --- the posterior distribution.
 
+```{r}
+fit <- brm(data = weight,
+           family = skew_normal,
+           weightloss_2mos ~ 1,
+           prior = c(prior(normal(0, 1), class = Intercept),
+                     prior(normal(0, 0.3), class = sigma),
+                     prior(normal(2, 0.5), class = alpha)),
+           iter = 3500,
+           warmup = 1000,
+           chains = 4,
+           refresh = 0)
+```
+
+```{r}
+summary(fit)
+plot(fit)
+pairs(fit,
+      off_diag_args = list(alpha = 0.1))
+```
+
 7. Describe in words how in principle you could use simulation to approximate the posterior predictive distribution.
+
+- Sim mu, sigma, and alpha ~ prior
+
+- Given mu, sigma, and alpha, sim 80 y ~ $N_{skewed}$(mu, sigma, alpha)
+
+- Repeat above
+
+- Summarise the y's
 
 8. Use simulation to approximate the posterior predictive distribution.
 Summarize --- with appropriate plots and summary statistics --- the posterior predictive distribution.
 
+```{r}
+y_predict = posterior_predict(fit)
+y_predict = data.frame(y_sim = y_predict[, 1])
+
+ggplot(y_predict,
+       aes(x = y_sim)) +
+  geom_histogram(aes(y = after_stat(density)),
+                 col = 'cornflowerblue', fill = "white", bins = 100) +
+  geom_density(linewidth = 1, col = 'cornflowerblue') +
+  theme_bw()
+
+quantile(y_predict$y_sim, c(0.005, 0.995))
+```
 
 9. Write a few clearly worded sentences reporting the main conclusions of your Bayesian analysis in context.
 Be sure to also consider the manner of data collection when stating your conclusions.
 (Is the sample reasonably representative of a population?
 Was the variable measured reliably?)
 
+My model can capture individuals who gained weight while still focusing on those who lost it due to the right skew. The posterior mean is 2.82, standard deviation is 2.44, and alpha is 2.49. We can say that there is a posterior probability of 95% that the mean weight loss after 2 months is between -2.4 lb and 10 lb. I cannot comment on the data collection sadly.  
 
 10. Now refit in the model using `brms`, but letting `brms` choose the prior for all parameters.
 Compare the results to those from the model you fit previously.
@@ -93,6 +188,78 @@ Compare the results to those from the model you fit previously.
     - How sensitive is the posterior predictive distribution to choice of prior?
     - Are any conclusions substantially different between the two models?
 
+```{r}
+fit_2 <- brm(data = weight,
+           family = skew_normal,
+           weightloss_2mos ~ 1,
+           iter = 3500,
+           warmup = 1000,
+           chains = 4,
+           refresh = 0)
+```
+
+```{r}
+posterior = fit_2 |>
+  tidybayes::spread_draws(b_Intercept, sigma, alpha) |>
+  rename(mu = b_Intercept)
+```
+
+```{r}
+prior_summary(fit_2)
+```
+
+- bmr chose $N_{skewed}$(student_t(3, 3, 4.4), student_t(3, 0, 4.4), normal(0, 4))
+
+- brm used the t distribution to select the mean and sigma, with larger values for the mean of both. The alpha uses a normal distribution like I did, however it has a smaller mean and larger SD. 
+
+```{r}
+n_rep <- 10000
+
+mu_sim_prior <- rstudent_t(n_rep, 3, 3, 4.4)
+sigma_sim_prior <- abs(rstudent_t(n_rep, 3, 0, 4.4))
+alpha_sim_prior <- rnorm(n_rep, 0, 4)
+y_sim_prior_brms = rskew_normal(n_rep, mu_sim_prior, sigma_sim_prior, alpha_sim_prior)
+
+prior_predictive_df_compare <- data.frame(
+  value = c(y_sim_prior_brms, y_sim_prior),
+  group = factor(rep(c("brms Prior", "My Prior"), each = 1000))
+)
+
+ggplot(prior_predictive_df_compare, aes(x = value, fill = group, alpha = 0.5)) +
+  geom_density() +
+  labs(title = "Comparison of Prior Predictive Distributions", x = "Weight Loss", y = "Density", fill = "Prior Group") +
+  theme_bw()
+```
+
+- The prior predictive distribution is much smaller than mine...
+
+```{r}
+summary(fit_2)
+```
+
+- Since the values for the posterior increased by a sizeable amount, I would say that the posterior is sensitive to the choice of the prior
+
+```{r}
+posterior_predictive_comparison_df <- data.frame(
+  value = c(posterior_predict(fit)[, 1], posterior_predict(fit_2)[, 1]),
+  group = factor(rep(c("My Prior (brms)", "Alternative Prior (brms)"), each = nrow(posterior_predict(fit_2))))
+)
+
+ggplot(posterior_predictive_comparison_df, aes(x = value, fill = group, alpha = 0.5)) +
+  geom_density() +
+  labs(title = "Comparison of Posterior Predictive Distributions (Different Priors)", x = "Weight Loss", y = "Density", fill = "Prior Group") +
+  theme_bw()
+```
+
+- The posterior predictive distribution has more variability than mine did. This makes sense since the prior chosen by brms had more uncertainty. 
+
+```{r}
+y_predict = posterior_predict(fit_2)
+y_predict = data.frame(y_sim = y_predict[, 1])
+quantile(y_predict$y_sim, c(0.005, 0.995))
+```
+
+- The values for all parameters of the posterior distribution are different, and the 95% credible interval is slightly wider. 
 
 11. (Optional.) Perform a comparable frequentist analysis using whatever software (R, applets, etc) you want.
 Interpret your results in context.
@@ -100,4 +267,4 @@ Compare the results of the frequentist and Bayesian analysis.
 Are the numerical results similar?
 How are the interpretations different?
 
-
+If I had time :)
