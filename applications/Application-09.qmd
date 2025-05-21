@@ -1,0 +1,252 @@
+---
+title: "STAT 415 Application 9"
+author: "Andrew Kerr"
+date: ''
+output:
+  html_document:
+    toc: yes
+    toc_float: yes
+    number_sections: yes
+  pdf_document: default
+---
+
+# Introduction
+
+In this application you will perform a Bayesian analysis comparing two population proportions.
+You will also code an MCMC algorithm from scratch.
+
+
+# Instructions
+
+This RMarkdown file provides a template for you to fill in.
+**Read the file from start to finish, completing the parts as indicated.**
+**Some code is provided for you. Be sure to run this code, and make sure you understand what it's doing.**
+In particular, mind the **PAUSE**s; be sure to **PAUSE** and think about these questions before proceeding.
+You are welcome to copy and paste code from handouts or my online notes.
+Be sure to include all code and relevant output in your submission.
+
+
+
+You'll need a few R packages, which you can install using `install.packages`
+
+```{r, warning = FALSE, message = FALSE}
+
+library(tidyverse)
+library(janitor)
+library(viridis)
+library(kableExtra)
+library(ggmosaic)
+
+library(brms)
+library(bayesplot)
+library(tidybayes)
+
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  eval = FALSE
+)
+
+```
+
+
+
+
+
+# Submission instructions
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document.
+When you are finished
+
+- Click **Knit** and check to make sure that you have no errors and everything runs properly.
+(Fix any problems and redo this step until it works.)
+- Make sure your type your name(s) at the top of the notebook where it says "Type your name(s) here".
+If you worked in a team, you will submit a single notebook with both names; make sure all names are included.
+- Submit your completed files in Canvas.
+
+
+
+
+# Setup
+
+Many studies of animals involve tagging the animals, but can the tags be harmful?
+Specifically, are metal bands used for tagging penguins harmful?
+[Researchers studied the effects of banding in a sample of 100 king penguins near Antarctica](https://www.nature.com/articles/nature09630) that had already been tagged with RFID (radio frequency identification) chips.
+Of these 100 penguins, 50 were randomly assigned to receive metal bands on their flippers (in addition to the RFID chip), while the remaining 50 did not receive metal bands.
+The penguins were followed for 4.5 years to see which penguins survived.
+
+
+Let $\theta_1$  denote the probability that a penguin *without* a metal band *survives* a 4.5-year period, and let $\theta_2$ denote the probability that a penguin *with* a metal band *survives* a 4.5-year period.
+(Throughout, "penguin" refers to whatever population of penguins this sample would be reasonably representative of.)
+
+**PAUSE** to consider your prior distribution for $\theta_1$ and $\theta_2$.
+Suppose you don't know much about penguin survival in Antarctica; what prior distribution might you assume?
+Would you necessarily assume that $\theta_1$ and $\theta_2$ are independent?
+Why might you want to assume some dependence between the parameters in the prior?
+(We'll discuss some issues in choosing the prior later.)
+
+
+
+# Sample data
+
+Here's a summary of the sample data.
+
+- Of the 50 penguins without metal bands, 31 survived this 4.5-year study period.
+- Of the 50 penguins with metal bands, 16 survived the 4.5-year study period.
+
+
+```{r}
+data = read_csv("penguins.csv")
+
+data |> head() |> kbl() |> kable_styling()
+```
+
+
+```{r}
+table(data$Metal_band, data$Survival_status)
+```
+
+
+
+```{r}
+ggplot(data) +
+  geom_mosaic(aes(x = product(Survival_status, Metal_band),
+                  fill = Survival_status)) +
+  theme_mosaic()
+```
+
+
+
+We will use the sample data to perform Bayesian inference to compare the probability of surviving with and without the metal band.
+
+
+# `brms` code
+
+
+We'll start with a prior that assumes $\theta_1$ and $\theta_2$ are independent.
+We'll choose the same marginal prior distribution for both $\theta_1$ and $\theta_2$ to reflect a prior belief of "no difference".
+A quick Google search reveals that the lifespan of Antarctic king penguins is 15-20 years, though we don't know how old the penguins were at the start of the 4.5-year study.
+Let's assume a prior with a mean that represents penguins are more likely to survive than not, but is still fairly non-informative.
+Therefore, our prior assumes
+
+- $\theta_1$ and $\theta_2$ are independent according to the prior
+- $\theta_1$ has a Beta(3, 2) prior distribution
+- $\theta_2$ has a Beta(3, 2) prior distribution
+
+
+
+The following `brms` code approximates the posterior distribution given the sample data via simulation and summarizes it.
+
+```{r}
+fit <-
+  brm(data = data, 
+      family = bernoulli(link = identity),
+      formula = Survival_status ~ 0 + Metal_band,
+      prior(beta(3, 2), lb = 0, ub = 1),
+      iter = 3500,
+      warmup = 1000,
+      chains = 4,
+      refresh = 0)
+```
+
+```{r}
+summary(fit)
+```
+
+
+```{r}
+plot(fit)
+```
+
+
+```{r}
+pairs(fit)
+```
+
+
+
+# Difference in proportions
+
+1. Use the `brms` results to approximate the posterior distribution of $\theta_1 - \theta_2$.
+Create a plot of the posterior distribution, and write a few sentences describing the posterior distribution in context.
+
+1. Compute and interpret in context (approximate) 50%, 80%, and 98% posterior credible intervals for $\theta_1 - \theta_2$.
+
+1. Compute and interpret in context the (approximate) posterior probability that $\theta_1-\theta_2>0$.
+
+
+
+**ENTER YOUR CODE AND YOUR RESPONSES HERE. ADD AS MANY CODE CHUNKS AS YOU WANT.**
+
+
+
+
+# Relative risk
+
+1. Use the `brms` results to approximate the posterior distribution of $\theta_1 / \theta_2$.
+Create a plot of the posterior distribution, and write a few sentences describing the posterior distribution in context.
+(Note: you might see a few super extreme ratios that will throw of the scale, so you might consider $\log(\theta_1 / \theta_2)$ instead for plotting.)
+
+1. Compute and interpret in context (approximate) 50%, 80%, and 98% posterior credible intervals for $\theta_1 / \theta_2$.
+
+1. Compute and interpret in context the (approximate) posterior probability that $\theta_1/\theta_2>1$.
+
+
+
+**ENTER YOUR CODE AND YOUR RESPONSES HERE. ADD AS MANY CODE CHUNKS AS YOU WANT.**
+
+
+
+
+# Conclusions
+
+Is there evidence that penguins with metal bands are more likely to die than those without?
+Can we conclude that the bands are the *cause* of any difference in survival probabilities?
+Write a few sentences summarizing your analysis and reporting conclusions in context.
+Be sure to support you conclusions with appropriate values reported in context.
+
+**ENTER YOUR RESPONSES HERE.**
+
+
+# MCMC 
+
+Now you will write code to implement the Metropolis algorithm and run it to approximate the posterior distribution.
+You don't have to get fancy about how the "steps" proceed; use whatever works for you: for loops, functions, replicate, vectorization, etc.
+What's important is that you implement the proposal + acceptance/rejection properly.
+In particular, make sure you know how data, likelihood, and prior enter in the picture.
+Your code should take data, likelihood, and prior as input and return a simulated sample from the posterior distribution *without first computing the posterior.*
+
+Given the current state, you can propose a new state using a "Bivariate Normal neighboorhood" like in the Steph Curry example.
+But consider the scale of your parameters when choosing the $\delta$ parameter that determines the "neighborhood".
+
+
+You are welcome to copy my code from the handouts as a starting point, but you will need to modify it to fit this situation.
+You might also understand the algorithm better if you code it from scratch.
+
+1. Code the algorithm, run it for 10 or so steps, and output the step-by-step results of the first 10 or so steps.
+Do enough steps so that you see each of (1) a proposal that is automatically accepted, (2) a proposal that is accepted, but not automatically, (3) a proposal that is rejected.
+For each step provide
+
+    - the current state
+    - the proposed state
+    - the probability of accepting the proposed move
+    - the decision to accept or reject the proposal
+
+1. Then simulate many steps of the chain, discard the first 1000 or so steps (warm up), and create
+
+    - trace plots
+    - a plot summarizing the joint posterior distribution of $(\theta_1, \theta_2)$ pairs
+    - plots summarizing the marginal posterior distributions of $\theta_1$ and $\theta_2$ 
+    - summaries of the posterior distributions (means, SDs, credible intervals, etc)
+
+1. Compare the results from your MCMC algorithm to the `brms` output.
+Are the results similar?
+
+```{r}
+### Type your code here. Feel free to add chunks as necessary
+```
+
+**TYPE YOUR RESPONSE HERE.**
+
+
