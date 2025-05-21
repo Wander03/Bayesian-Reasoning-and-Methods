@@ -8,6 +8,7 @@ output:
     toc_float: yes
     number_sections: yes
   pdf_document: default
+embed-resources: true
 ---
 
 # Introduction
@@ -45,7 +46,7 @@ knitr::opts_chunk$set(
   echo = TRUE,
   warning = FALSE,
   message = FALSE,
-  eval = FALSE
+  eval = TRUE
 )
 
 ```
@@ -97,7 +98,7 @@ Here's a summary of the sample data.
 
 
 ```{r}
-data = read_csv("penguins.csv")
+data = read_csv(here::here("data", "penguins.csv"))
 
 data |> head() |> kbl() |> kable_styling()
 ```
@@ -171,16 +172,51 @@ pairs(fit)
 1. Use the `brms` results to approximate the posterior distribution of $\theta_1 - \theta_2$.
 Create a plot of the posterior distribution, and write a few sentences describing the posterior distribution in context.
 
+```{r}
+posterior = fit |>
+  spread_draws(b_Metal_bandyes, b_Metal_bandno) |>
+  rename(mu1 = b_Metal_bandno, mu2 = b_Metal_bandyes) |>
+  mutate(mu_diff = mu1 - mu2)
+
+ggplot(posterior,
+       aes(x = mu_diff)) +
+  geom_histogram(aes(y = after_stat(density)),
+                 col = "cornflowerblue", fill = "white", bins = 100) +
+  geom_density(linewidth = 1, col = "cornflowerblue") +
+  labs(x = "Difference in means (probability)") +
+  theme_bw()
+
+posterior |>
+  summarise(
+    mean = mean(mu_diff),
+    sd = sd(mu_diff)
+  ) |> kbl() |> kable_styling()
+```
+
+The posterior distribution has a mean of 0.27 and SD of 0.09. In other words, on 
+average the difference in survival probability for penguins without bands is 0.27
+compared to those with bands. The distribution appears normal, with a slightly longer
+left tail.
+
 1. Compute and interpret in context (approximate) 50%, 80%, and 98% posterior credible intervals for $\theta_1 - \theta_2$.
+
+```{r}
+quantile(posterior$mu_diff,
+         c(0.01, 0.10, 0.25, 0.5, 0.75, 0.90, 0.99))
+```
+
+There is a posterior probability of [50%/80%/98%] that the average probability of
+survival for bandless penguins is between [0.21/0.16/0.07] and [0.34/0.39/0.47]
+units greater than banded penguins.
 
 1. Compute and interpret in context the (approximate) posterior probability that $\theta_1-\theta_2>0$.
 
+```{r}
+sum(posterior$mu_diff > 0) / length(posterior$mu_diff)
+```
 
-
-**ENTER YOUR CODE AND YOUR RESPONSES HERE. ADD AS MANY CODE CHUNKS AS YOU WANT.**
-
-
-
+The posterior probability that bandless penguins live longer than banded penguins
+is 0.9988.
 
 # Relative risk
 
@@ -188,16 +224,51 @@ Create a plot of the posterior distribution, and write a few sentences describin
 Create a plot of the posterior distribution, and write a few sentences describing the posterior distribution in context.
 (Note: you might see a few super extreme ratios that will throw of the scale, so you might consider $\log(\theta_1 / \theta_2)$ instead for plotting.)
 
+```{r}
+posterior = fit |>
+  spread_draws(b_Metal_bandyes, b_Metal_bandno) |>
+  rename(mu1 = b_Metal_bandno, mu2 = b_Metal_bandyes) |>
+  mutate(mu_ratio = mu1 / mu2)
+
+ggplot(posterior,
+       aes(x = log(mu_ratio))) +
+  geom_histogram(aes(y = after_stat(density)),
+                 col = "cornflowerblue", fill = "white", bins = 100) +
+  geom_density(linewidth = 1, col = "cornflowerblue") +
+  labs(x = "Log Difference in means (probability)") +
+  theme_bw()
+
+posterior |>
+  summarise(
+    mean = mean(mu_ratio),
+    sd = sd(mu_ratio)
+  ) |> kbl() |> kable_styling()
+```
+
+The mean and SD of the ratio are 1.86 and 0.41 respectively. This means that 
+the probability of survival for bandless penguins is 1.86 times larger than that
+for banded penguins (or 86% larger). The plot of the log ratio is slightly right 
+skewed (and without log is has some extreme values to the right).
+
 1. Compute and interpret in context (approximate) 50%, 80%, and 98% posterior credible intervals for $\theta_1 / \theta_2$.
+
+```{r}
+quantile(posterior$mu_ratio,
+         c(0.01, 0.10, 0.25, 0.5, 0.75, 0.90, 0.99))
+```
+
+There is a posterior probability of [50%/80%/98%] that the average probability of
+survival for bandless penguins is between [1.57/1.39/1.14] and [2.08/2.40/3.11]
+times greater than that for banded penguins.
 
 1. Compute and interpret in context the (approximate) posterior probability that $\theta_1/\theta_2>1$.
 
+```{r}
+sum(posterior$mu_ratio > 0) / length(posterior$mu_ratio)
+```
 
-
-**ENTER YOUR CODE AND YOUR RESPONSES HERE. ADD AS MANY CODE CHUNKS AS YOU WANT.**
-
-
-
+The posterior probability that bandless penguins live longer than banded penguins
+is 1.00.
 
 # Conclusions
 
@@ -206,8 +277,12 @@ Can we conclude that the bands are the *cause* of any difference in survival pro
 Write a few sentences summarizing your analysis and reporting conclusions in context.
 Be sure to support you conclusions with appropriate values reported in context.
 
-**ENTER YOUR RESPONSES HERE.**
-
+There is evidence that penguins with metal bands are more likely to die than 
+those without since both the difference and the ratio averages and credible
+intervals were in favor of the bandless penguins living longer. We can conclude 
+that the bands are the reason since we are assuming the populations are 
+independent, and because we used random assignment when assigning bands to the
+penguins. 
 
 # MCMC 
 
@@ -224,6 +299,57 @@ But consider the scale of your parameters when choosing the $\delta$ parameter t
 You are welcome to copy my code from the handouts as a starting point, but you will need to modify it to fit this situation.
 You might also understand the algorithm better if you code it from scratch.
 
+```{r}
+pi_theta <- function(theta_1, theta_2) {
+  if(theta_1 >= 0 || theta_1 <= 1 || theta_2 >= 0 || theta_2 <= 1){
+      likelihood_theta_1 <- dbinom(31, size = 50, prob = theta_1)
+      likelihood_theta_2 <- dbinom(16, size = 50, prob = theta_2)
+      dbeta(theta_1, 3, 2) * dbeta(theta_2, 3, 2) * likelihood_theta_1 * likelihood_theta_2
+    } else {
+      0
+    }
+}
+
+metropolis <- function(N, delta=c(0.05, 0.05), seed=123, output=F){
+  set.seed(seed)
+  results <- matrix(NA, nrow = N, ncol = 2)
+  colnames(results) <- c("theta1", "theta2")
+  
+  cur_1 <- 0.5
+  cur_2 <- 0.5
+  results[1, ] <- c(cur_1, cur_2)
+  
+  for(i in 2:N){
+    prop_1 <- cur_1 + rnorm(1, mean = 0, sd = delta[1])
+    prop_2 <- cur_2 + rnorm(1, mean = 0, sd = delta[2])
+    a <- min(1, pi_theta(prop_1, prop_2)/pi_theta(cur_1, cur_2))
+    
+    decision <- sample(c(F, T), size=1, prob=c(1-a, a))
+    
+    if(decision){
+      cur_1 <- prop_1
+      cur_2 <- prop_2
+    }
+    
+    results[i, ] <- c(cur_1, cur_2)
+    
+    if(output){
+      cat("Step:", i)
+      cat("\nCurrent State:", cur_1, cur_2)
+      cat("\nProposed State:", prop_1, prop_2)
+      cat("\nAcceptance Proba.:", a)
+      cat(
+        "\nDecision:",
+        if(decision){"Accepted!"}else{"Rejected!"}, 
+        "\n------------------------------------\n"
+        )
+    }
+    
+  }
+  return(results)
+}
+```
+
 1. Code the algorithm, run it for 10 or so steps, and output the step-by-step results of the first 10 or so steps.
 Do enough steps so that you see each of (1) a proposal that is automatically accepted, (2) a proposal that is accepted, but not automatically, (3) a proposal that is rejected.
 For each step provide
@@ -233,6 +359,10 @@ For each step provide
     - the probability of accepting the proposed move
     - the decision to accept or reject the proposal
 
+```{r}
+results <- metropolis(10, seed=111, output=T)
+```
+
 1. Then simulate many steps of the chain, discard the first 1000 or so steps (warm up), and create
 
     - trace plots
@@ -240,13 +370,47 @@ For each step provide
     - plots summarizing the marginal posterior distributions of $\theta_1$ and $\theta_2$ 
     - summaries of the posterior distributions (means, SDs, credible intervals, etc)
 
+```{r}
+results <- metropolis(10000, seed=111)
+
+results <- results[-(1:1000), ]
+
+par(mfrow = c(1, 2))
+plot(1:nrow(results), results[,1], type = "l", xlab = "Step", ylab = "theta1")
+plot(1:nrow(results), results[,2], type = "l", xlab = "Step", ylab = "theta2")
+
+par(mfrow = c(1, 1))
+ggplot(results, aes(theta1, theta2)) +
+  geom_point(color = "cornflowerblue", alpha = 0.4) +
+  stat_ellipse(level = 0.98, color = "black", size = 2) +
+  stat_density_2d(color = "grey", size = 1) +
+  theme_bw()
+
+par(mfrow = c(1, 2))
+hist(results[,1], breaks = 50, freq = FALSE,
+ xlab = "theta", main = "Posterior Distribution theta1")
+hist(results[,2], breaks = 50, freq = FALSE,
+ xlab = "theta", main = "Posterior Distribution theta2")
+
+as.data.frame(results) |>
+  summarise(
+    mean_theta1 = mean(theta1),
+    mean_theta2 = mean(theta2),
+    SD_theta1 = sd(theta1),
+    SD_theta2 = sd(theta2)
+  )
+
+quantile(results[1,],
+         c(0.01, 0.10, 0.25, 0.5, 0.75, 0.90, 0.99))
+quantile(results[2,],
+         c(0.01, 0.10, 0.25, 0.5, 0.75, 0.90, 0.99))
+```
+
 1. Compare the results from your MCMC algorithm to the `brms` output.
 Are the results similar?
 
-```{r}
-### Type your code here. Feel free to add chunks as necessary
-```
-
-**TYPE YOUR RESPONSE HERE.**
+The results from the brms and my output are similar/agree that penguins without
+bands have a greater probability of survival than those with bands. The mean and 
+SD values are very similar, if not the same!
 
 
