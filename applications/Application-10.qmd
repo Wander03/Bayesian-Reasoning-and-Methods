@@ -1,0 +1,300 @@
+---
+title: "STAT 415 Application 10"
+author: "Andrew Kerr"
+date: ''
+output:
+  html_document:
+    number_sections: yes
+  pdf_document: default
+embed-resources: true
+code-fold: true
+toc: true
+---
+
+# Introduction
+
+In this application you will perform a Bayesian analysis of a simple linear regression model for predicting a numerical response variable from a single numerical explanatory variable, using a data set and context of your choice.
+
+
+# Instructions
+
+This RMarkdown file provides a template for you to fill in.
+You are welcome to copy and paste code from handouts or my online notes.
+Be sure to include all code and relevant output in your submission.
+
+
+# Submission instructions
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document.
+When you are finished
+
+- Click **Knit** and check to make sure that you have no errors and everything runs properly.
+(Fix any problems and redo this step until it works.)
+- Make sure your type your name(s) at the top of the notebook where it says "Type your name(s) here".
+If you worked in a team, you will submit a single notebook with both names; make sure all names are included.
+- Submit your completed files in Canvas.
+
+```{r}
+#| message: false
+#| warning: false
+library(tidyverse)
+library(janitor)
+library(viridis)
+library(kableExtra)
+library(ggmosaic)
+
+library(brms)
+library(bayesplot)
+library(tidybayes)
+```
+
+# Tasks
+
+1. Find a context involving simple linear regression.
+You should have a data set with a single numerical response variable and a single numerical explanatory variable, and the assumptions of the simple linear regression model should be reasonably satisfied by the sample data.
+Ideally, the context should be interesting to you personally.
+You might want to choose an example from a previous STAT class.
+
+```{r}
+#| message: false
+possum <- read_csv(here::here("data", "possum.csv"))
+```
+
+2. Clearly define in context the relevant parameters.
+Be sure to clarify how the variables are measured.
+
+- Response: The head length the possum (cm)
+
+- Predictor: The tail length of the possum (cm)
+
+3. Use prior predictive tuning to determine your prior distribution of your parameters.
+You only need to report your final choice of prior (not all the steps of your tuning), but be sure to describe your process.
+Summarize --- with appropriate plots and summary statistics (similar to the ones in Handout 23) --- both the prior distribution of parameters and the prior predictive distribution.
+(It doesn't really matter what your prior is, but it should be your choice, reflecting any background knowledge of the context and the results of your posterior predictive tuning.
+In this part do *not* just let `brms` choose the prior.)
+
+```{r}
+n_rep = 1000
+
+# a range of values of x
+x = runif(n_rep, 30, 40)
+
+# simulate parameters from prior distribution
+beta0 = rnorm(n_rep, 30, 1)
+beta1 = rnorm(n_rep, 2, 0.3)
+sigma = rexp(n_rep, 1 / 10)
+
+# simulate values of percent body fat based on assumptions of regression model
+y = rnorm(n_rep, beta0 + beta1 * x, sigma)
+
+# scatter plot or prior predicted values
+plot(x, y,
+     xlab = "Tail Length (cm)", ylab = "Prior predicted head legnth (cm)",
+     col = "cornflowerblue")
+
+# number of lines to plot
+n_lines = 100
+
+# blank scatterplot - just set the plot area and scale
+plot(x, y, xlab = "Tail Length (cm)", ylab = "Prior predicted head legnth (cm)", type = "n",
+     ylim = c(80, 110))
+
+# plot each of the simulated lines
+# using slope and intercept simulated from prior distribution
+for (l in 1:n_lines){
+  abline(beta0[l], beta1[l], col = "cornflowerblue", lwd = 1)
+}
+```
+
+I tried different values for my priors until I saw a slightly positive slope with 
+predicted head lengths between 80 and 110. 
+
+4. Clearly state the assumptions of your model: both assumptions that determine the likelihood and assumptions that determine the prior.
+Note: you can decide whether you want to center the explanatory variable or not, but be clear about what you choose and interpret your parameters and prior/posterior distribution accordingly.
+
+Prior:
+I am assuming that the intercept and slope each follows a normal distribution with their respective mean and standard deviation. I am assuming that the possum to possum variance follows an exponential distribution. Each of these beliefs are independent of each other.
+
+Likelihood:
+I am assuming that the head length and tail length of the possums are linearly associated, normally distributed, and that the residuals have equal variance. I also assume that observations are independent.   
+
+5. Find some reliable sample data from a reputable source and cite the source for your sample (the organization that collected the data and a link to the study/article is fine).
+You will need the individual data points; summary statistics like the sample mean are *not* enough.
+A sample size in the few hundreds or maybe a thousand is ideal.
+
+    **Note:** you are NOT collecting your own data.
+    Instead, you're finding data from an available source.
+    One suggestion: find an example from a previous STAT class (e.g., STAT 302) that you found interesting, and do a Bayesian analysis.
+
+The data set comes from STAT 334, not sure how it was collected (ask Dr. Holladay I guess)!
+
+6. Investigate how the data was collected.
+Depending on your source, it might be hard to find information, but do try to look for the survey methodology.
+Is your sample reasonably representative of your population of interest?
+Is your variable measured reliably?
+
+Since Dr. Holladay provied this data I believe that it is collected in the most accurate way and will perfectly represent the population of possums between the ages of 1 and 9.
+
+7. Describe in words how in principle you could use simulation to approximate the posterior distribution.
+
+- Sim (beta_0, beta_1, sigma) from the prior
+
+- Sim y | above ~ N(beta0 + beta1 * x, sigma) for 104 y's (same as sampled data)
+
+- Repeat and summarise (beta0, beta1, sigma) for reps that are the same as the sample
+
+8. Use `brms` to approximate the posterior distribution.
+Summarize --- with appropriate plots and summary statistics (similar to the ones in Handout 23) --- the posterior distribution.
+
+```{r}
+fit <- brm(data = possum,
+           family = gaussian(),
+           head_l ~ 1 + tail_l,
+           prior = c(prior(normal(30, 1), class = Intercept),
+                     prior(normal(2, 0.3), class = b),
+                     prior(exponential(0.1), class = sigma)),
+           iter = 3500,
+           warmup = 1000,
+           chains = 4,
+           refresh = 0)
+```
+
+```{r}
+summary(fit)
+plot(fit)
+pairs(fit)
+mcmc_dens_overlay(fit, pars = vars(b_Intercept, b_tail_l, sigma))
+neff_ratio(fit)[c("b_Intercept", "b_tail_l", "sigma")]
+neff_ratio(fit)[c("b_Intercept", "b_tail_l", "sigma")] |> 
+  mcmc_neff() +
+  yaxis_text(hjust = 0) 
+```
+
+9. Describe in words how in principle you could use simulation to approximate the posterior predictive distribution.
+
+- Sim (beta_0, beta_1) ~ posteriro (brm provides this)
+
+- Sim y ~ N(beta0 + beta1 * (x - xbar), sigma)
+
+- Summarise y's
+
+10. Use simulation to approximate the posterior predictive distribution.
+Summarize --- with appropriate plots and summary statistics (similar to the ones in Handout 23) --- the posterior predictive distribution.
+
+```{r}
+y_predict = posterior_predict(fit)
+y_predict = data.frame(y_sim = y_predict[, 1])
+
+ggplot(y_predict,
+       aes(x = y_sim)) +
+  geom_histogram(aes(y = after_stat(density)),
+                 col = 'cornflowerblue', fill = "white", bins = 100) +
+  geom_density(linewidth = 1, col = 'cornflowerblue') +
+  theme_bw()
+
+mean(y_predict$y_sim)
+quantile(y_predict$y_sim, c(0.025, 0.975))
+```
+
+11. Write a few clearly worded sentences reporting the main conclusions of your Bayesian analysis in context.
+Be sure to also consider the manner of data collection when stating your conclusions.
+(Is the sample reasonably representative of a population?
+Were the variables measured reliably?)
+
+This model has VERY large variability in predicted head length of possums based on tail length. The average head length is roughly 30 cm, which is much smaller than those seen in the data. The posterior distribution appears to be normal.
+
+12. Perform some graphical posterior predictive checks.
+Does the data seem consitent with the model?
+
+```{r}
+possum |>
+  add_predicted_draws(fit, ndraws = 4) %>%
+  ggplot(aes(x = tail_l, y = head_l)) +
+    geom_point(aes(y = .prediction,
+                   group = .draw), size = 0.2) + 
+    facet_wrap(~ .draw) +
+    theme_bw()
+
+pp_check(fit, ndraw = 100)
+
+predictions <- posterior_predict(fit)
+ppc_intervals(possum$head_l,
+              yrep = predictions,
+              x = possum$tail_l, 
+              prob = 0.5,
+              prob_outer = 0.95)
+```
+
+The data does not seem consistent with the model, the model appears to greatly under predict the data...
+
+13. Now refit in the model using `brms`, but letting `brms` choose the prior for all parameters.
+Compare the results to those from the model you fit previously.
+
+    - What prior does `brms` choose?
+    - How does the `brms` prior distribution compare to your prior distribution?
+    - How does the prior predictive distribution based on the `brms` prior distribution compare to your prior predictive distribution?
+    - How sensitive is the posterior distribution to choice of prior?
+    - How sensitive is the posterior predictive distribution to choice of prior?
+    - Are any conclusions substantially different between the two models?
+
+```{r}
+fit_brms_prior <- brm(data = possum,
+           family = gaussian(),
+           head_l ~ 1 + tail_l,
+           prior = set_prior("normal(0, 10)", class = "b"),
+           sample_prior = "only",
+           iter = 3500,
+           warmup = 1000,
+           chains = 4,
+           refresh = 0)
+
+fit_brms <- brm(data = possum,
+           family = gaussian(),
+           head_l ~ 1 + tail_l,
+           iter = 3500,
+           warmup = 1000,
+           chains = 4,
+           refresh = 0)
+```
+
+```{r}
+summary(fit_brms)
+
+fit_brms_prior$prior
+
+pp_check(fit_brms_prior, ndraw = 100)
+
+pp_check(fit_brms, ndraw = 100)
+
+predictions <- posterior_predict(fit_brms)
+ppc_intervals(possum$head_l,
+              yrep = predictions,
+              x = possum$tail_l, 
+              prob = 0.5,
+              prob_outer = 0.95)
+
+mean(predictions)
+quantile(predictions, c(0.025, 0.975))
+```
+
+Priors:
+
+- beta_0: t(3, 92.8, 3)
+
+- beta_1: flat --> uniform/weakly informative prior
+
+- sigma: t(3, 0, 3), lower bound = 0
+
+Compared to my priors, brms used the t-distribution rather than the normal, and selected a higher mean for beta_0. 
+
+The posterior and posterior predictive distributions appears to be sensitive to the choice of prior seeing how the estimates have greatly changed with this new prior. The new posterior predictive distribution has a much smaller variance, however it has a similar center. 
+
+The conclusions differ with this new prior, where the posterior distributions mean is now 92 cm, more in line with the data!
+
+14. (Optional.) Perform a comparable frequentist analysis using whatever software (R, applets, etc) you want.
+Interpret your results in context.
+Compare the results of the frequentist and Bayesian analysis.
+Are the numerical results similar?
+How are the interpretations different?
+
+
