@@ -1,0 +1,178 @@
+---
+title: "STAT 415 Application 12"
+author: "Andrew Kerr"
+date: ''
+output:
+  html_document:
+    number_sections: yes
+  pdf_document: default
+embed-resources: true
+toc: true
+code-fold: true
+---
+
+```{r}
+#| include: false
+library(tidyverse)
+library(kableExtra)
+```
+
+
+
+# Introduction
+
+In this application you will perform naive Bayesian classification.
+
+
+# Instructions
+
+This RMarkdown file provides a template for you to fill in.
+You are welcome to copy and paste code from handouts or my online notes.
+Be sure to include all code and relevant output in your submission.
+
+
+# Submission instructions
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document.
+When you are finished
+
+- Click **Knit** and check to make sure that you have no errors and everything runs properly.
+(Fix any problems and redo this step until it works.)
+- Make sure your type your name(s) at the top of the notebook where it says "Type your name(s) here".
+If you worked in a team, you will submit a single notebook with both names; make sure all names are included.
+- Submit your completed files in Canvas.
+
+# Tasks
+
+We will use naive Bayes classification to classify a person's opinion on climate change into one of the following categories, based on characteristics including political party, age (years), and income (\$ thousands):
+
+- Climate change is not real at all
+- Climate change is real but not caused by people
+- Climate change is real and caused by people
+
+Suppose that it is known that 
+
+- 15% of people believe that climate change is not real at all
+- 30% of people believe that climate change is real but not caused by people
+- 55% of people believe that climate change is real and caused by people
+- Among people who believe that climate change is not real, 50% are Republican, ages have mean 53.4 and SD 15.6, and incomes have mean 69.4 and SD 38.0
+- Among people who believe that climate change is real but not caused by people, 40% are Republican, ages have mean 51.5 and SD 16.4, and incomes have mean 83.9 and SD 38.9
+- Among people who believe that climate change is real and caused by people, 13% are Republican, ages have mean 47.7 and SD 16.9, and incomes have mean 88.2 and SD 43.1
+
+
+1. Suppose a randomly selected person is a Republican.
+Create a Bayes table and find the posterior probabilities of the person's opinion on climate change.
+Which category would you classify this person as?
+
+```{r}
+category <- c("Climate change is not real at all (NR)",
+              "Climate change is real but not caused by people (RNC)",
+              "Climate change is real and caused by people (RC)")
+
+prior <- c(0.15, 0.30, 0.55)
+likelihood_repub <- c(.5, .4, .13)
+
+product <- prior * likelihood_repub
+posterior <- product / sum(product)
+
+data.frame(
+  category,
+  prior,
+  likelihood_repub,
+  posterior,
+  classification = as.numeric(posterior == max(posterior))
+) %>% kable()
+```
+
+2. Suppose a randomly selected person is age 75.
+Create a Bayes table and find the posterior probabilities of the person's opinion on climate change.
+Which category would you classify this person as?
+
+```{r}
+category <- c("Climate change is not real at all (NR)",
+              "Climate change is real but not caused by people (RNC)",
+              "Climate change is real and caused by people (RC)")
+
+prior <- c(0.15, 0.30, 0.55)
+likelihood_75 <- c(dnorm(75, 53.4, 15.6),
+                   dnorm(75, 51.5, 16.4), 
+                   dnorm(75, 47.7, 16.9))
+
+product <- prior * likelihood_75
+posterior <- product / sum(product)
+
+data.frame(
+  category,
+  prior,
+  likelihood_75,
+  posterior,
+  classification = as.numeric(posterior == max(posterior))
+) %>% kable()
+```
+
+3. Suppose a randomly selected person has income 40.
+Create a Bayes table and find the posterior probabilities of the person's opinion on climate change.
+Which category would you classify this person as?
+
+```{r}
+category <- c("Climate change is not real at all (NR)",
+              "Climate change is real but not caused by people (RNC)",
+              "Climate change is real and caused by people (RC)")
+
+prior <- c(0.15, 0.30, 0.55)
+likelihood_40 <- c(dnorm(40, 69.4, 38.0),
+                   dnorm(40, 83.9, 38.9), 
+                   dnorm(40, 88.2, 43.1))
+
+product <- prior * likelihood_40
+posterior <- product / sum(product)
+
+data.frame(
+  category,
+  prior,
+  likelihood_40,
+  posterior,
+  classification = as.numeric(posterior == max(posterior))
+) %>% kable()
+```
+
+4. Which of the three pieces of information above --- Republican party, age 75, income 40 --- results in the largest change from prior to posterior?
+Why?
+
+The republican party results in the largest change because the likelihood probabilities are the largest.
+
+5. Suppose a randomly selected person is Republican, is age 75, and has income 40.
+Create a Bayes table and find the posterior probabilities of the person's opinion on climate change.
+Which category would you classify this person as?
+
+```{r}
+category <- c("Climate change is not real at all (NR)",
+              "Climate change is real but not caused by people (RNC)",
+              "Climate change is real and caused by people (RC)")
+
+prior <- c(0.15, 0.30, 0.55)
+
+likelihood_repub <- c(.5, .4, .13)
+likelihood_75 <- c(dnorm(75, 53.4, 15.6),
+                   dnorm(75, 51.5, 16.4), 
+                   dnorm(75, 47.7, 16.9))
+likelihood_40 <- c(dnorm(40, 69.4, 38.0),
+                   dnorm(40, 83.9, 38.9), 
+                   dnorm(40, 88.2, 43.1))
+
+product <- prior * likelihood_repub * likelihood_75 * likelihood_40
+posterior <- product / sum(product)
+
+data.frame(
+  category,
+  prior,
+  likelihood = likelihood_repub * likelihood_75 * likelihood_40,
+  posterior,
+  classification = as.numeric(posterior == max(posterior))
+) %>% kable()
+```
+
+6. Which assumptions of the naive Bayes classification algorithm do you think are the most questionable in the context of the example?
+Explain your reasoning.
+
+The independence assumption between being in the Republican party, age, and income since people in the Republican party tend to be older and make more money, and people who are older in general tend to make more money.
