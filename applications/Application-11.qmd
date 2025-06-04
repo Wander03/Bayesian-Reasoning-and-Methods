@@ -1,0 +1,396 @@
+---
+title: "STAT 415 Application 11"
+author: "Andrew Kerr"
+date: ''
+output:
+  html_document:
+    toc: yes
+    toc_float: yes
+    number_sections: yes
+  pdf_document: default
+---
+
+
+
+
+
+# Introduction
+
+In this application you will use `brms` to fit a hierarchical model for a numerical response variable.
+This application is based on [Chapter 16 of the *Bayes Rules!*](https://www.bayesrulesbook.com/chapter-16.html#hierarchical-building-16) book.
+
+
+# Set up
+
+
+You'll need a few R packages, which you can install using `install.packages`
+
+```{r, warning = FALSE, message = FALSE}
+
+library(tidyverse)
+library(janitor)
+library(viridis)
+library(kableExtra)
+library(broom)
+
+library(brms)
+library(bayesplot)
+library(tidybayes)
+
+
+```
+
+
+
+
+
+# Submission instructions
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document.
+When you are finished
+
+- Click **Knit** and check to make sure that you have no errors and everything runs properly.
+(Fix any problems and redo this step until it works.)
+- Make sure your type your name(s) at the top of the notebook where it says "Type your name(s) here".
+If you worked in a team, you will submit a single notebook with both names; make sure all names are included.
+- Submit your completed files in Canvas.
+
+
+
+# Sample Data
+
+The `spotify` data set from the `bayesrules` package contains data on a sample of 247 songs^[Chapter 16 of *Bayes Rules!* says 350 songs, but some of those songs appear multiple times in the data set on different Spotify playlists; there are 247 unique songs.] from a sample of 44 artists, with multiple songs per `artist`.
+The response variable of interest in the song's Spotify `popularity` rating, which takes values from 0 to 100.
+
+The following code loads and briefly summarizes the sample data.
+
+```{r}
+
+library(bayesrules)
+
+data(spotify)
+
+data <- spotify |>
+  
+  # remove duplicate songs
+  group_by(title) |>
+  filter(row_number() == 1) |>
+  
+  # select variables of interest
+  select(artist, title, popularity)
+
+# view the 10 most popular songs in the sample
+data |> arrange(desc(popularity)) |> head(10)
+```
+```{r}
+# Summarize number of songs and mean popularity by artist
+artist_means <- data |>
+  group_by(artist) |>
+  summarize(number_of_songs = n(),
+            mean_popularity = mean(popularity, na.rm = TRUE))
+
+# view the 10 most popular artists in terms of mean popularity
+artist_means |> arrange(desc(mean_popularity)) |> head(10)
+```
+
+
+
+
+```{r}
+# Plot popularity of each song by artist
+# Along with mean popularity for each artist
+# Arrange artists in terms of mean popularity
+
+ggplot(data, 
+       aes(x = fct_reorder(artist, popularity, .fun = 'mean'),
+           y = popularity)) +
+  geom_point() +
+  xaxis_text(angle = 90, hjust = 1) +
+  labs(x = "artist") +
+  geom_point(data = artist_means,
+             mapping=aes(x = artist, y = mean_popularity),
+             shape = "-", size = 6, col="red")
+```
+
+# Notation and motivating questions
+
+- $i$ represents song
+- $j$ represents artist
+- $y_{ij}$ is the popularity of song $i$ from artist $j$.
+
+(@) We might assume $y_{ij}\sim N(\mu_j, \sigma_y)$.
+How would you interpret $\mu_j$ in context?
+
+**TYPE YOUR RESPONSE HERE.**
+
+
+
+
+(@) One way to estimate $\mu_j$ is to pool all the data together.
+What are some issues with this approach?
+
+**TYPE YOUR RESPONSE HERE.**
+
+
+
+(@) At the other extreme, we could estimate $\mu_j$ using just the songs for artist $j$.
+What are some issues with this approach?
+
+**TYPE YOUR RESPONSE HERE.**
+
+
+
+
+# Hierarchical model
+
+We will assume
+
+\begin{align*}
+y_{ij} & \sim N(\mu_j, \sigma_y)\\
+\mu_j & \sim N(\mu, \sigma_\mu)\\
+\mu & \sim N(50, 25)\\
+\sigma_y & \sim \text{Exponential}(0.05)\\
+\sigma_\mu & \sim \text{Exponential}(0.05)
+\end{align*}
+
+
+(@) How many parameters are there in this model?
+
+**TYPE YOUR RESPONSE HERE.**
+
+
+(@) We have already interpreted $\mu_j$.
+How would you interpret $\mu$ in context?
+
+**TYPE YOUR RESPONSE HERE.**
+
+
+
+(@) What does the prior distribution on $\mu$ represent in context?
+
+**TYPE YOUR RESPONSE HERE.**
+
+
+
+(@) How would you interpret $\sigma_y$ in context?
+
+**TYPE YOUR RESPONSE HERE.**
+
+
+(@) How would you interpret $\sigma_\mu$ in context?
+
+
+**TYPE YOUR RESPONSE HERE.**
+
+
+
+# Posterior distribution
+
+The following code fits the hierarchical model to the sample data using `brms`.
+
+
+```{r}
+fit <- brm(data = data,
+           family = gaussian(),
+           popularity ~ 1 + (1 | artist),
+           prior = c(prior(normal(50, 25), class = Intercept), # prior on mu
+                     prior(exponential(0.05), class = sigma), # prior on sigma_y
+                     prior(exponential(0.05), class = sd)), # prior on sigma_mu
+           iter = 3500,
+           warmup = 1000,
+           chains = 4,
+           refresh = 0)
+```
+
+```{r}
+summary(fit)
+```
+
+```{r}
+plot(fit)
+```
+
+
+```{r}
+pairs(fit)
+```
+
+
+```{r}
+mcmc_intervals(fit,
+               pars = c("b_Intercept"),
+               prob = 0.5,
+               prob_outer = 0.98)
+```
+
+
+```{r}
+mcmc_areas(fit,
+           pars = c("b_Intercept"),
+           prob = 0.8)
+```
+
+
+
+(@) `b_Intercept` represents $\mu$.
+Summarize the posterior distribution of $\mu$ in context.
+Find and interpret 50%, 80%, and 98% posterior credible intervals for $\mu$.
+
+
+**TYPE YOUR RESPONSE HERE.**
+
+
+
+(@) `sd_artist__Intercept` represents $\sigma_\mu$.
+Interpret the posterior mean of $\sigma_\mu$ in context.
+
+**TYPE YOUR RESPONSE HERE.**
+
+
+
+(@) `sigma` represents $\sigma_y$.
+Interpret the posterior mean of $\sigma_y$ in context.
+
+
+**TYPE YOUR RESPONSE HERE.**
+
+
+
+(@) Define
+$$
+\theta = \frac{\sigma_\mu^2}{\sigma_\mu^2 + \sigma_y^2}
+$$
+The following code summarizes the posterior distribution of $\theta$.
+
+
+
+```{r}
+global_params = fit |>
+  spread_draws(b_Intercept, sd_artist__Intercept, sigma) |>
+  mutate(theta = sd_artist__Intercept ^ 2 / (sd_artist__Intercept ^ 2 + sigma ^ 2))
+
+```
+
+
+```{r}
+ggplot(global_params,
+       aes(x = theta)) + 
+  geom_density()
+```
+
+```{r}
+quantile(global_params$theta, c(0.1, 0.5, 0.9))
+```
+
+Interpret the posterior mean of $\theta$ and a 80% posterior credible interval for $\theta$ in context.
+
+
+**TYPE YOUR RESPONSE HERE.**
+
+
+
+(@) Suppose a new artist releases their first song on Spotify.
+What would be your single number best guess of the song's popularity?
+Find and interpret a 95% posterior prediction interval (as best as you can based on the summaries provided).
+Explain your reasoning.
+
+
+**TYPE YOUR RESPONSE HERE.**
+
+
+
+(@) Suppose a new artist releases their first album on Spotify, containing 10 songs.
+What would be your single number best guess of this artist's mean popularity?
+Find and interpret a 95% posterior credible interval (as best as you can based on the summaries provided).
+Explain your reasoning.
+
+
+**TYPE YOUR RESPONSE HERE.**
+
+
+
+(@) Now we'll look at individual artist parameters.
+Each artist has an `r_artist` parameter in `brms`.
+However, in the `brms` parametrization, `r_artist` represents $\mu_j - \mu$, so that $\mu_j$ is represented by `b_Intercept + r_artist`.
+
+
+```{r}
+artist_params <- fit |>
+  spread_draws(r_artist[artist,Intercept], b_Intercept) |>
+  mutate(mu_artist = b_Intercept + r_artist)
+
+artist_params |> head(10)
+```
+The following computes 80% posterior credible intervals for each $\mu_j$.
+
+```{r}
+artist_summary = artist_params |>
+  select(-b_Intercept, -r_artist) |> 
+  mean_qi(.width = 0.80) |> 
+  mutate(artist = fct_reorder(artist, mu_artist)) |>
+  select(artist, mu_artist, .lower, .upper) |>
+  left_join(artist_means|>
+              mutate(artist = str_replace(artist, " ", ".")),
+            by = c("artist" = "artist"))
+
+
+artist_summary |> arrange(desc(mean_popularity)) |> head(10)
+```
+
+Here is a plot of the credible intervals, along with the artist sample mean popularity.
+
+```{r}
+ggplot(artist_summary, 
+       aes(x = fct_reorder(artist, mu_artist),
+           y = mu_artist, ymin = .lower, ymax = .upper)) +
+  geom_pointrange() +
+  xaxis_text(angle = 90, hjust = 1) +
+  labs(x = "artist") + 
+  geom_point(aes(x = artist, y = mean_popularity),
+             shape = "-", size = 6, col="red")
+```
+
+(@) Which of the artists experience the most "shrinkage"?
+Why?
+Explain your reasoning.
+
+
+**TYPE YOUR RESPONSE HERE.**
+
+
+
+
+
+(@) Which of the artists have the widest credible intervals?
+Why?
+Explain your reasoning.
+
+
+**TYPE YOUR RESPONSE HERE.**
+
+
+
+(@) Interpret the credible interval for Beyonce in context.
+
+
+**TYPE YOUR RESPONSE HERE.**
+
+
+
+
+(@) Interpret the credible interval for Sufjan Stevens in context.
+
+
+
+
+**TYPE YOUR RESPONSE HERE.**
+
+
+
+
+
+(@) Suppose that Frank Ocean releases a new song on Spotify.
+What would be your single number best guess of the song's popularity?
+Find and interpret a 95% posterior prediction interval (as best as you can based on the summaries provided).
+Explain your reasoning.
+
